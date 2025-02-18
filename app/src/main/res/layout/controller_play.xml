@@ -7,14 +7,57 @@
     android:layout_height="match_parent"
     tools:context=".controller.PlayController">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Video Play View"
-        android:id="@+id/play_tv"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <TextureView
+        android:layout_width="match_parent"
+        android:layout_height="900px"
+        android:id="@+id/play_texture_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+    
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Play"
+        android:id="@+id/play_btn_play"
+        app:layout_constraintEnd_toStartOf="@id/play_btn_pause"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/play_texture_view" />
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pause"
+        android:id="@+id/play_btn_pause"
+        app:layout_constraintEnd_toStartOf="@id/play_btn_stop"
+        app:layout_constraintStart_toEndOf="@id/play_btn_play"
+        app:layout_constraintTop_toBottomOf="@id/play_texture_view" />
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop"
+        android:id="@+id/play_btn_stop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/play_btn_pause"
+        app:layout_constraintTop_toBottomOf="@id/play_texture_view" />
+
+    <ProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/play_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/play_btn_pause" />
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Extract Audio"
+        android:id="@+id/play_btn_extract_audio"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/play_progress" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
