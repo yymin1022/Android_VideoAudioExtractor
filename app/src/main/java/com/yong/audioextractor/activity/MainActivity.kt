@@ -10,6 +10,11 @@ import com.bluelinelabs.conductor.Conductor
 import com.bluelinelabs.conductor.Router
 import com.yong.audioextractor.R
 
+/**
+ * MainActivity
+ * - 기본 Router 선언 및 초기화
+ * - Router에 기본 Controller 지정
+ */
 class MainActivity: AppCompatActivity() {
     private lateinit var router: Router
 
@@ -23,11 +28,14 @@ class MainActivity: AppCompatActivity() {
             insets
         }
 
+        // Container ViewGroup 초기화
         val controllerContainer = findViewById<ViewGroup>(R.id.main_controller_container)
+        // Router 초기화
         router = Conductor.attachRouter(this, controllerContainer, savedInstanceState)
-        
-        if(!router.hasRootController()) {
 
+        // 기본 Controller 지정
+        if(!router.hasRootController()) {
+            // TODO: 기본 Controller 지정
         }
     }
 }
