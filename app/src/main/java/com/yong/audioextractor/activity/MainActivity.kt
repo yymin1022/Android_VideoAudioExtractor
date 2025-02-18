@@ -8,7 +8,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bluelinelabs.conductor.Conductor
 import com.bluelinelabs.conductor.Router
+import com.bluelinelabs.conductor.RouterTransaction
 import com.yong.audioextractor.R
+import com.yong.audioextractor.controller.PlayController
 
 /**
  * MainActivity
@@ -35,7 +37,7 @@ class MainActivity: AppCompatActivity() {
 
         // 기본 Controller 지정
         if(!router.hasRootController()) {
-            // TODO: 기본 Controller 지정
+            router.setRoot(RouterTransaction.with(PlayController()))
         }
     }
 }
