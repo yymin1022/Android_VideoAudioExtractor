@@ -1,5 +1,6 @@
 package com.yong.audioextractor.controller
 
+import android.graphics.SurfaceTexture
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.TextureView
@@ -48,7 +49,29 @@ class PlayController: Controller() {
         btnPlay.setOnClickListener(btnListener)
         btnStop.setOnClickListener(btnListener)
 
+        // TextureView Surface Listener 지정
+        textureView.surfaceTextureListener = textureViewListener
+
         return view
+    }
+
+    // TextureView Surface Listener
+    private val textureViewListener = object: TextureView.SurfaceTextureListener {
+        // TextureView Init 완료
+        override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+            // Model 내 재생 리소스 초기화
+        }
+
+
+        // TextureView 제거
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+            // Model 내 재생 리소스 해제
+            return true
+        }
+
+        // 구현하지 않는 메소드
+        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
     }
 
     // Button OnClickListener
