@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.bluelinelabs.conductor.Controller
+import com.yong.audioextractor.R
 
 class PlayController: Controller() {
     override fun onCreateView(
@@ -12,6 +13,7 @@ class PlayController: Controller() {
         container: ViewGroup,
         savedViewState: Bundle?
     ): View {
-        return container
+        val view = inflater.inflate(R.layout.controller_play, container, false)
+        return view
     }
 }
