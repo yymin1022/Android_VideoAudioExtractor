@@ -60,7 +60,11 @@ class PlayController: Controller() {
     private val textureViewListener = object: TextureView.SurfaceTextureListener {
         // TextureView Init 완료
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-            // Model 내 재생 리소스 초기화
+            // Raw Resource에서 Video 파일을 열고 FD값 지정
+            val videoFd = resources?.openRawResourceFd(R.raw.sample_video)
+            videoFd?.let {
+                // Model 내 재생 리소스 초기화
+            }
         }
 
 
