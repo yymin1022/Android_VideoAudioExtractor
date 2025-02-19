@@ -32,8 +32,8 @@ class VideoDecoder(
     var isPaused = false
     var isPlaying = false
 
-    // Decoding 시작
-    fun startDecoding(surface: Surface) {
+    // Video Play 시작
+    fun startVideoPlay(surface: Surface) {
         // MediaExtractor 초기화
         // Video FD에서 파일을 읽어 Source로 지정
         initExtractor()
@@ -49,25 +49,21 @@ class VideoDecoder(
         isPlaying = true
 
         // Decoder Coroutine 작업 생성
-        decodeJob = CoroutineScope(Dispatchers.IO).launch {
-            while(isPlaying) {
-                // TODO: Buffer Decoding 작업
-            }
-        }
+        initVideoDecodeJob()
     }
 
-    // 일시 정지된 Decoding을 계속 진행
-    fun resumeDecoding() {
+    // 일시 정지된 Video Play 계속 진행
+    fun resumeVideoPlay() {
         isPaused = false
     }
 
-    // Decoding 일시 정지
-    fun pauseDecoding() {
+    // Video Play 일시 정지
+    fun pauseVideoPlay() {
         isPaused = true
     }
 
-    // Decoding 종료
-    fun stopDecoding() {
+    // Video Play 종료
+    fun stopVideoPlay() {
         isPlaying = false
         // Decoder Coroutine 작업 종료
         decodeJob?.cancel()
@@ -109,5 +105,13 @@ class VideoDecoder(
         // 탐색한 Track을 지정과 렌더링할 Surface를 지정
         // Crypto와 Flag는 지정하지 않음
         mediaCodec.configure(mediaExtractor.getTrackFormat(trackNum), surface, null, 0)
+    }
+
+    private fun initVideoDecodeJob() {
+        decodeJob = CoroutineScope(Dispatchers.IO).launch {
+            while(isPlaying) {
+
+            }
+        }
     }
 }
