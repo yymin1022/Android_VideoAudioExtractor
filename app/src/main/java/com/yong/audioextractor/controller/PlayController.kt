@@ -1,5 +1,6 @@
 package com.yong.audioextractor.controller
 
+import android.content.res.AssetFileDescriptor
 import android.graphics.SurfaceTexture
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -34,6 +35,8 @@ class PlayController: Controller() {
 
     // Video Decoder Model 선언
     private lateinit var videoDecoder: VideoDecoder
+    // Video Asset File Descriptor
+    private lateinit var videoFd: AssetFileDescriptor
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,7 +69,7 @@ class PlayController: Controller() {
         // TextureView Init 완료
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
             // Raw Resource에서 Video 파일을 열고 FD값 지정
-            val videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
+            videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
             videoDecoder = VideoDecoder(videoFd)
         }
 
@@ -75,6 +78,8 @@ class PlayController: Controller() {
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
             // Model 내 재생 중지 및 리소스 해제
             videoDecoder.stopVideoPlay()
+            // Video File Close
+            videoFd.close()
             return true
         }
 
