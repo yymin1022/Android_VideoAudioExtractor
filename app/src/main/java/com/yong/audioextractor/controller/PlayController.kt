@@ -97,22 +97,26 @@ class PlayController: Controller() {
 
             // Video Play Pause
             btnPause -> {
-                videoDecoder.pauseVideoPlay()
+                if(videoDecoder.isPlaying) {
+                    videoDecoder.pauseVideoPlay()
+                }
             }
 
             // Video Play Start
             btnPlay -> {
                 // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
-                if(videoDecoder.isPaused && videoDecoder.isPlaying) {
-                    videoDecoder.resumeVideoPlay()
-                } else {
+                if(!videoDecoder.isPlaying) {
                     videoDecoder.startVideoPlay(Surface(textureView.surfaceTexture))
+                } else if(videoDecoder.isPaused) {
+                    videoDecoder.resumeVideoPlay()
                 }
             }
 
             // Video Play Stop
             btnStop -> {
-                videoDecoder.stopVideoPlay()
+                if(videoDecoder.isPlaying) {
+                    videoDecoder.stopVideoPlay()
+                }
             }
         }
     }
