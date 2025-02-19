@@ -3,6 +3,7 @@ package com.yong.audioextractor.controller
 import android.graphics.SurfaceTexture
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Surface
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
@@ -32,7 +33,7 @@ class PlayController: Controller() {
     private lateinit var textureView: TextureView
 
     // Video Decoder Model 선언
-    private val videoDecoder = VideoDecoder()
+    private lateinit var videoDecoder: VideoDecoder
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,13 +69,15 @@ class PlayController: Controller() {
             val videoFd = resources?.openRawResourceFd(R.raw.sample_video)
             videoFd?.let {
                 // Model 내 재생 리소스 초기화
+                videoDecoder = VideoDecoder(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
             }
         }
 
 
         // TextureView 제거
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-            // Model 내 재생 리소스 해제
+            // Model 내 재생 중지 및 리소스 해제
+            videoDecoder.stopVideo()
             return true
         }
 
@@ -94,17 +97,17 @@ class PlayController: Controller() {
 
             // Video Play Pause
             btnPause -> {
-                // TODO: Pause Video Play
+                videoDecoder.pauseVideo()
             }
 
             // Video Play Start
             btnPlay -> {
-                // TODO: Start Video Play
+                videoDecoder.playVideo(Surface(textureView.surfaceTexture))
             }
 
             // Video Play Stop
             btnStop -> {
-                // TODO: Stop Video Play
+                videoDecoder.stopVideo()
             }
         }
     }
