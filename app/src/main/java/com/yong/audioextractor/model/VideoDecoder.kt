@@ -25,6 +25,7 @@ class VideoDecoder(
     var isPlaying = false
 
     fun startDecoding(surface: Surface) {
+        initExtractor()
         isPlaying = true
     }
 
@@ -38,5 +39,10 @@ class VideoDecoder(
 
     fun stopDecoding() {
         isPlaying = false
+    }
+
+    private fun initExtractor() {
+        mediaExtractor = MediaExtractor()
+        mediaExtractor.setDataSource(videoFd, fileOffset, fileLength)
     }
 }
