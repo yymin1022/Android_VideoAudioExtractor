@@ -80,7 +80,7 @@ class PlayController: Controller() {
         when(view) {
             // Extract Audio
             btnExtract -> {
-                // TODO: Go to ExtractController
+                // Router에 ExtractController Push
                 router.pushController(RouterTransaction.with(ExtractController()))
             }
 
