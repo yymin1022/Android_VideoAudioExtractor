@@ -2,6 +2,7 @@ package com.yong.audioextractor.model
 
 import android.media.MediaCodec
 import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.view.Surface
 import java.io.FileDescriptor
 
@@ -26,6 +27,10 @@ class VideoDecoder(
 
     fun startDecoding(surface: Surface) {
         initExtractor()
+
+        val videoTrack = getVideoTrack()
+        initDecoder(videoTrack, surface)
+
         isPlaying = true
     }
 
@@ -44,5 +49,26 @@ class VideoDecoder(
     private fun initExtractor() {
         mediaExtractor = MediaExtractor()
         mediaExtractor.setDataSource(videoFd, fileOffset, fileLength)
+    }
+
+    private fun getVideoTrack(): Int {
+        var trackNum = -1
+        for(i in 0 until mediaExtractor.trackCount) {
+            val trackFormat = mediaExtractor.getTrackFormat(i)
+            val trackType = trackFormat.getString(MediaFormat.KEY_MIME) ?: continue
+
+            if(trackType == MediaFormat.MIMETYPE_VIDEO_AVC) {
+                trackNum = i
+                mediaExtractor.selectTrack(trackNum)
+                break
+            }
+        }
+
+        return trackNum
+    }
+
+    private fun initDecoder(trackNum: Int, surface: Surface) {
+        mediaCodec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        mediaCodec.configure(mediaExtractor.getTrackFormat(trackNum), surface, null, 0)
     }
 }
