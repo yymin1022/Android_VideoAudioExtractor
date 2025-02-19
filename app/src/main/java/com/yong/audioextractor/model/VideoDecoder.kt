@@ -52,6 +52,7 @@ class VideoDecoder(
 
         // Decoder Coroutine 작업 생성
         initVideoDecodeJob()
+        // Render Coroutine 작업 생성
         initVideoRenderJob()
     }
 
@@ -112,18 +113,43 @@ class VideoDecoder(
         mediaCodec.configure(mediaExtractor.getTrackFormat(trackNum), surface, null, 0)
     }
 
+    // Decoder Coroutine 작업 생성
     private fun initVideoDecodeJob() {
         decodeJob = CoroutineScope(Dispatchers.IO).launch {
+            // Video Play 진행 중 반복
             while(isPlaying) {
+                val inputIdx = mediaCodec.dequeueInputBuffer(0)
+                if(inputIdx >= 0) {
+                    val inputBuffer = mediaCodec.getInputBuffer(inputIdx) ?: throw Exception("Buffer Error")
+                    val sampleSize = mediaExtractor.readSampleData(inputBuffer, 0)
 
+                    if(sampleSize < 0) {
+                        mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        break
+                    }
+
+                    val sampleTime = mediaExtractor.sampleTime
+                    mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
+                    mediaExtractor.advance()
+                }
             }
         }
     }
 
+    // Render Coroutine 작업 생성
     private fun initVideoRenderJob() {
-        renderJob = CoroutineScope(Dispatchers.Main).launch {
+        renderJob = CoroutineScope(Dispatchers.IO).launch {
+            val bufferInfo = MediaCodec.BufferInfo()
+            // Video Play 진행 중 반복
             while(isPlaying) {
-                
+                val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
+                if(outputIdx >= 0) {
+                    mediaCodec.releaseOutputBuffer(outputIdx, true)
+                }
+
+                if((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    break
+                }
             }
         }
     }
