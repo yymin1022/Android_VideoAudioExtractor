@@ -1,5 +1,6 @@
 package com.yong.audioextractor.model
 
+import android.content.res.AssetFileDescriptor
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -9,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.FileDescriptor
 
 /**
  * VideoDecoder
@@ -17,9 +17,7 @@ import java.io.FileDescriptor
  */
 class VideoDecoder(
     // Video File에 접근하기 위한 FD 파라미터
-    private val videoFd: FileDescriptor,
-    private val fileOffset: Long,
-    private val fileLength: Long
+    private val videoFd: AssetFileDescriptor
 ) {
     // Video 정보 확인을 위한 Media Extractor
     private lateinit var mediaExtractor: MediaExtractor
@@ -85,7 +83,7 @@ class VideoDecoder(
     private fun initExtractor() {
         mediaExtractor = MediaExtractor()
         // Video FD에서 파일을 읽어 Source로 지정
-        mediaExtractor.setDataSource(videoFd, fileOffset, fileLength)
+        mediaExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
     }
 
     // MediaExtractor를 통해 Source 내에서 Video Track 탐색

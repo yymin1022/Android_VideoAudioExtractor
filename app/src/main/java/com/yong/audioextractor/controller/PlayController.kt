@@ -66,11 +66,8 @@ class PlayController: Controller() {
         // TextureView Init 완료
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
             // Raw Resource에서 Video 파일을 열고 FD값 지정
-            val videoFd = resources?.openRawResourceFd(R.raw.sample_video)
-            videoFd?.let {
-                // Model 내 재생 리소스 초기화
-                videoDecoder = VideoDecoder(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
-            }
+            val videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
+            videoDecoder = VideoDecoder(videoFd)
         }
 
 
