@@ -1,5 +1,7 @@
 package com.yong.audioextractor.model
 
+import android.media.MediaCodec
+import android.media.MediaExtractor
 import android.view.Surface
 import java.io.FileDescriptor
 
@@ -13,8 +15,13 @@ class VideoDecoder(
     private val fileOffset: Long,
     private val fileLength: Long
 ) {
+    // Video 정보 확인을 위한 Media Extractor
+    private lateinit var mediaExtractor: MediaExtractor
+    // Video Decode를 위한 Media Codec
+    private lateinit var mediaCodec: MediaCodec
+
     // 재생 중 상태를 표기하기 위한 Field
-    // Pause 상태에서는 true 값음
+    var isPaused = false
     var isPlaying = false
 
     fun startDecoding(surface: Surface) {
@@ -22,11 +29,11 @@ class VideoDecoder(
     }
 
     fun resumeDecoding() {
-
+        isPaused = false
     }
 
     fun pauseDecoding() {
-
+        isPaused = true
     }
 
     fun stopDecoding() {

@@ -103,7 +103,7 @@ class PlayController: Controller() {
             // Video Play Start
             btnPlay -> {
                 // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
-                if(videoDecoder.isPlaying) {
+                if(videoDecoder.isPaused && videoDecoder.isPlaying) {
                     videoDecoder.resumeDecoding()
                 } else {
                     videoDecoder.startDecoding(Surface(textureView.surfaceTexture))
