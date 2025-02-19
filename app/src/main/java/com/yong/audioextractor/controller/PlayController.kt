@@ -11,6 +11,7 @@ import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.RouterTransaction
 import com.google.android.material.button.MaterialButton
 import com.yong.audioextractor.R
+import com.yong.audioextractor.model.VideoDecoder
 
 /**
  * PlayController
@@ -19,7 +20,7 @@ import com.yong.audioextractor.R
  * - ProgressBar를 통해 Video Play 진행도 표시
  */
 class PlayController: Controller() {
-    // UI Elements
+    /** UI Elements */
     // Buttons
     private lateinit var btnExtract: MaterialButton
     private lateinit var btnPause: MaterialButton
@@ -29,6 +30,9 @@ class PlayController: Controller() {
     private lateinit var progressPlay: ProgressBar
     // Video가 재생되는 TextureView
     private lateinit var textureView: TextureView
+
+    // Video Decoder Model 선언
+    private val videoDecoder = VideoDecoder()
 
     override fun onCreateView(
         inflater: LayoutInflater,
