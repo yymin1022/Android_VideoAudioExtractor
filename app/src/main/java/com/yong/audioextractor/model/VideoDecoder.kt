@@ -92,6 +92,7 @@ class VideoDecoder(
         // MediaExtractor 내 모든 Track을 탐색
         for(i in 0 until mediaExtractor.trackCount) {
             val trackFormat = mediaExtractor.getTrackFormat(i)
+            // Type을 알 수 없는 Track인 경우 건너뛰기
             val trackType = trackFormat.getString(MediaFormat.KEY_MIME) ?: continue
 
             // video/avc MIME Type을 갖는 Track 지정
