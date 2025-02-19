@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import com.bluelinelabs.conductor.Controller
+import com.bluelinelabs.conductor.RouterTransaction
 import com.google.android.material.button.MaterialButton
 import com.yong.audioextractor.R
 
@@ -80,6 +81,7 @@ class PlayController: Controller() {
             // Extract Audio
             btnExtract -> {
                 // TODO: Go to ExtractController
+                router.pushController(RouterTransaction.with(ExtractController()))
             }
 
             // Video Play Pause

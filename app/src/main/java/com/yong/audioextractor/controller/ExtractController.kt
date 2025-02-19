@@ -16,4 +16,9 @@ class ExtractController: Controller() {
         val view = inflater.inflate(R.layout.controller_extract, container, false)
         return view
     }
+
+    override fun handleBack(): Boolean {
+        router.popCurrentController()
+        return true
+    }
 }
