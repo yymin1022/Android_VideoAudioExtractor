@@ -4,6 +4,10 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.view.Surface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.FileDescriptor
 
 /**
@@ -20,6 +24,9 @@ class VideoDecoder(
     private lateinit var mediaExtractor: MediaExtractor
     // Video Decode를 위한 Media Codec
     private lateinit var mediaCodec: MediaCodec
+
+    // Decoding 작업을 수행하기 위한 Coroutine Job
+    private var decodeJob: Job? = null
 
     // 재생 중 상태를 표기하기 위한 Field
     var isPaused = false
@@ -40,6 +47,13 @@ class VideoDecoder(
         // Decoder 시작
         mediaCodec.start()
         isPlaying = true
+
+        // Decoder Coroutine 작업 생성
+        decodeJob = CoroutineScope(Dispatchers.IO).launch {
+            while(isPlaying) {
+                // TODO: Buffer Decoding 작업
+            }
+        }
     }
 
     // 일시 정지된 Decoding을 계속 진행
@@ -54,8 +68,10 @@ class VideoDecoder(
 
     // Decoding 종료
     fun stopDecoding() {
-        // Decoder 종료 및 해제
         isPlaying = false
+        // Decoder Coroutine 작업 종료
+        decodeJob?.cancel()
+        // Decoder 종료 및 해제
         mediaCodec.stop()
         mediaCodec.release()
         mediaExtractor.release()
