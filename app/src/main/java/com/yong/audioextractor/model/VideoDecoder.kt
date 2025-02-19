@@ -77,6 +77,7 @@ class VideoDecoder(
         // Decoder 종료 및 해제
         mediaCodec.stop()
         mediaCodec.release()
+        // Extractor 해제
         mediaExtractor.release()
     }
 
