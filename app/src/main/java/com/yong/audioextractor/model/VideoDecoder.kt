@@ -28,7 +28,7 @@ class VideoDecoder(
     fun startDecoding(surface: Surface) {
         initExtractor()
 
-        val videoTrack = getVideoTrack()
+        val videoTrack = getVideoTrack() ?: throw Exception("No Video Track")
         initDecoder(videoTrack, surface)
 
         isPlaying = true
@@ -51,20 +51,18 @@ class VideoDecoder(
         mediaExtractor.setDataSource(videoFd, fileOffset, fileLength)
     }
 
-    private fun getVideoTrack(): Int {
-        var trackNum = -1
+    private fun getVideoTrack(): Int? {
         for(i in 0 until mediaExtractor.trackCount) {
             val trackFormat = mediaExtractor.getTrackFormat(i)
             val trackType = trackFormat.getString(MediaFormat.KEY_MIME) ?: continue
 
             if(trackType == MediaFormat.MIMETYPE_VIDEO_AVC) {
-                trackNum = i
-                mediaExtractor.selectTrack(trackNum)
-                break
+                mediaExtractor.selectTrack(i)
+                return i
             }
         }
 
-        return trackNum
+        return null
     }
 
     private fun initDecoder(trackNum: Int, surface: Surface) {
