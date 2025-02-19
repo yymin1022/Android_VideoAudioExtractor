@@ -121,25 +121,34 @@ class VideoDecoder(
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             // Video Play 진행 중 반복
             while(isPlaying) {
-                // Pause 상태인 경우 Decode 하지 않음
+                // Pause 상태인 경우 Decode 하지 않고 대기
                 if(isPaused) {
                     delay(100)
                     continue
                 }
 
+                // Input Buffer 요청
                 val inputIdx = mediaCodec.dequeueInputBuffer(0)
+                // Buffer가 읽을 수 있는 상태인 경우
                 if(inputIdx >= 0) {
                     val inputBuffer = mediaCodec.getInputBuffer(inputIdx) ?: throw Exception("Buffer Error")
+                    // Buffer에서 Sample 데이터 읽기
                     val sampleSize = mediaExtractor.readSampleData(inputBuffer, 0)
 
+                    // 더이상 읽을 Sample 데이터가 없는 경우
+                    // 즉, 영상을 끝까지 재생한 경우
                     if(sampleSize < 0) {
+                        // End Of Stream Flag 전달 후 종료
                         mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                         stopVideoPlay()
                         break
                     }
 
+                    // 현재 읽은 데이터의 타임스탬프 확인
                     val sampleTime = mediaExtractor.sampleTime
+                    // Decoder에 읽어들인 데이터 추가
                     mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
+                    // 다음 Frame으로 이동
                     mediaExtractor.advance()
                 }
             }
@@ -152,17 +161,20 @@ class VideoDecoder(
             val bufferInfo = MediaCodec.BufferInfo()
             // Video Play 진행 중 반복
             while(isPlaying) {
-                // Pause 상태인 경우 Render 하지 않음
+                // Pause 상태인 경우 Decode 하지 않고 대기
                 if(isPaused) {
                     delay(100)
                     continue
                 }
 
+                // 렌더링할 Output Buffer 읽기
                 val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
                 if(outputIdx >= 0) {
+                    // 데이터가 유효한 경우 렌더링
                     mediaCodec.releaseOutputBuffer(outputIdx, true)
                 }
 
+                // Video가 끝난 Flag인 경우 종료
                 if((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     stopVideoPlay()
                     break
