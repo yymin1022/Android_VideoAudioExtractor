@@ -27,6 +27,8 @@ class VideoDecoder(
 
     // Decoding 작업을 수행하기 위한 Coroutine Job
     private var decodeJob: Job? = null
+    // Render 작업을 수행하기 위한 Coroutine Job
+    private var renderJob: Job? = null
 
     // 재생 중 상태를 표기하기 위한 Field
     var isPaused = false
@@ -50,6 +52,7 @@ class VideoDecoder(
 
         // Decoder Coroutine 작업 생성
         initVideoDecodeJob()
+        initVideoRenderJob()
     }
 
     // 일시 정지된 Video Play 계속 진행
@@ -67,6 +70,8 @@ class VideoDecoder(
         isPlaying = false
         // Decoder Coroutine 작업 종료
         decodeJob?.cancel()
+        // Render Coroutine 작업 종료
+        renderJob?.cancel()
         // Decoder 종료 및 해제
         mediaCodec.stop()
         mediaCodec.release()
@@ -111,6 +116,14 @@ class VideoDecoder(
         decodeJob = CoroutineScope(Dispatchers.IO).launch {
             while(isPlaying) {
 
+            }
+        }
+    }
+
+    private fun initVideoRenderJob() {
+        renderJob = CoroutineScope(Dispatchers.Main).launch {
+            while(isPlaying) {
+                
             }
         }
     }
