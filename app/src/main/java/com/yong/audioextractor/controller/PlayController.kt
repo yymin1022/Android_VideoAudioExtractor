@@ -77,7 +77,7 @@ class PlayController: Controller() {
         // TextureView 제거
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
             // Model 내 재생 중지 및 리소스 해제
-            videoDecoder.stopVideo()
+            videoDecoder.stopDecoding()
             return true
         }
 
@@ -97,17 +97,22 @@ class PlayController: Controller() {
 
             // Video Play Pause
             btnPause -> {
-                videoDecoder.pauseVideo()
+                videoDecoder.pauseDecoding()
             }
 
             // Video Play Start
             btnPlay -> {
-                videoDecoder.playVideo(Surface(textureView.surfaceTexture))
+                // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
+                if(videoDecoder.isPlaying) {
+                    videoDecoder.resumeDecoding()
+                } else {
+                    videoDecoder.startDecoding(Surface(textureView.surfaceTexture))
+                }
             }
 
             // Video Play Stop
             btnStop -> {
-                videoDecoder.stopVideo()
+                videoDecoder.stopDecoding()
             }
         }
     }

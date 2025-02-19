@@ -17,15 +17,19 @@ class VideoDecoder(
     // Pause 상태에서는 true 값음
     var isPlaying = false
 
-    fun playVideo(surface: Surface) {
+    fun startDecoding(surface: Surface) {
         isPlaying = true
     }
 
-    fun pauseVideo() {
+    fun resumeDecoding() {
 
     }
 
-    fun stopVideo() {
+    fun pauseDecoding() {
+
+    }
+
+    fun stopDecoding() {
         isPlaying = false
     }
 }
