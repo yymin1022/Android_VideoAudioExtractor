@@ -31,6 +31,7 @@ class VideoDecoder(
         val videoTrack = getVideoTrack() ?: throw Exception("No Video Track")
         initDecoder(videoTrack, surface)
 
+        mediaCodec.start()
         isPlaying = true
     }
 
@@ -44,6 +45,9 @@ class VideoDecoder(
 
     fun stopDecoding() {
         isPlaying = false
+        mediaCodec.stop()
+        mediaCodec.release()
+        mediaExtractor.release()
     }
 
     private fun initExtractor() {
