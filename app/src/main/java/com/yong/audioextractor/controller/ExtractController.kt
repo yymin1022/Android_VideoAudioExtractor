@@ -6,8 +6,12 @@ import android.view.View
 import android.view.ViewGroup
 import com.bluelinelabs.conductor.Controller
 import com.yong.audioextractor.R
+import com.yong.audioextractor.model.AudioExtractor
 
 class ExtractController: Controller() {
+    // Audio Extractor Model 선언
+    private val audioExtractor = AudioExtractor()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup,
