@@ -15,10 +15,7 @@ import kotlinx.coroutines.launch
  * VideoDecoder
  * - Video를 Decode하고 재생하기 위한 Model
  */
-class VideoDecoder(
-    // Video File에 접근하기 위한 FD 파라미터
-    private val videoFd: AssetFileDescriptor
-) {
+class VideoDecoder {
     // Video 정보 확인을 위한 Media Extractor
     private lateinit var mediaExtractor: MediaExtractor
     // Video Decode를 위한 Media Codec
@@ -34,10 +31,10 @@ class VideoDecoder(
     var isPlaying = false
 
     // Video Play 시작
-    fun startVideoPlay(surface: Surface) {
+    fun startVideoPlay(videoFd: AssetFileDescriptor, surface: Surface) {
         // MediaExtractor 초기화
         // Video FD에서 파일을 읽어 Source로 지정
-        initExtractor()
+        initExtractor(videoFd)
 
         // MediaExtractor를 통해 Source 내에서 Video Track 탐색
         // Track이 Null인 경우 없는 것이므로 Exception 발생
@@ -80,7 +77,7 @@ class VideoDecoder(
     }
 
     // MediaExtractor 초기화
-    private fun initExtractor() {
+    private fun initExtractor(videoFd: AssetFileDescriptor) {
         mediaExtractor = MediaExtractor()
         // Video FD에서 파일을 읽어 Source로 지정
         mediaExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)

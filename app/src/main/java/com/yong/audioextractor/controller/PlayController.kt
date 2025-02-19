@@ -33,10 +33,10 @@ class PlayController: Controller() {
     // Video가 재생되는 TextureView
     private lateinit var textureView: TextureView
 
-    // Video Decoder Model 선언
-    private lateinit var videoDecoder: VideoDecoder
     // Video Asset File Descriptor
-    private lateinit var videoFd: AssetFileDescriptor
+    private var videoFd: AssetFileDescriptor? = null
+    // Video Decoder Model
+    private val videoDecoder = VideoDecoder()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -70,7 +70,6 @@ class PlayController: Controller() {
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
             // Raw Resource에서 Video 파일을 열고 FD값 지정
             videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
-            videoDecoder = VideoDecoder(videoFd)
         }
 
 
@@ -79,7 +78,7 @@ class PlayController: Controller() {
             // Model 내 재생 중지 및 리소스 해제
             videoDecoder.stopVideoPlay()
             // Video File Close
-            videoFd.close()
+            videoFd?.close()
             return true
         }
 
@@ -106,11 +105,13 @@ class PlayController: Controller() {
 
             // Video Play Start
             btnPlay -> {
-                // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
-                if(!videoDecoder.isPlaying) {
-                    videoDecoder.startVideoPlay(Surface(textureView.surfaceTexture))
-                } else if(videoDecoder.isPaused) {
-                    videoDecoder.resumeVideoPlay()
+                videoFd?.use { fd ->
+                    // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
+                    if(!videoDecoder.isPlaying) {
+                        videoDecoder.startVideoPlay(fd, Surface(textureView.surfaceTexture))
+                    } else if(videoDecoder.isPaused) {
+                        videoDecoder.resumeVideoPlay()
+                    }
                 }
             }
 
