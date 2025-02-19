@@ -132,6 +132,7 @@ class VideoDecoder(
 
                     if(sampleSize < 0) {
                         mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        stopVideoPlay()
                         break
                     }
 
@@ -161,6 +162,7 @@ class VideoDecoder(
                 }
 
                 if((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    stopVideoPlay()
                     break
                 }
             }
