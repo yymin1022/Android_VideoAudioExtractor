@@ -2,6 +2,7 @@ package com.yong.audioextractor.activity
 
 import android.os.Bundle
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -18,6 +19,7 @@ import com.yong.audioextractor.controller.PlayController
  * - Router에 기본 Controller 지정
  */
 class MainActivity: AppCompatActivity() {
+    // 기본 Router 정의
     private lateinit var router: Router
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +32,9 @@ class MainActivity: AppCompatActivity() {
             insets
         }
 
+        // 뒤로가기 동작에 obBackPressed Callback 지정
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+
         // Container ViewGroup 초기화
         val controllerContainer = findViewById<ViewGroup>(R.id.main_controller_container)
         // Router 초기화
@@ -39,5 +44,19 @@ class MainActivity: AppCompatActivity() {
         if(!router.hasRootController()) {
             router.setRoot(RouterTransaction.with(PlayController()))
         }
+    }
+
+    // onBackPressed Callback 정의
+    private val onBackPressedCallback: OnBackPressedCallback = object: OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            // Router가 뒤로가기 동작을 처리하지 않은 경우
+            // 즉, PlauController를 보이고 있는 경우
+            if(!router.handleBack()) {
+                // onBackPressed 동작 비활성화 및 Activity 기본 뒤로가기 동작 호출
+                this.isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+            }
+        }
+
     }
 }
