@@ -7,6 +7,7 @@ import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.FileDescriptor
 
@@ -115,9 +116,15 @@ class VideoDecoder(
 
     // Decoder Coroutine 작업 생성
     private fun initVideoDecodeJob() {
-        decodeJob = CoroutineScope(Dispatchers.IO).launch {
+        decodeJob = CoroutineScope(Dispatchers.Default).launch {
             // Video Play 진행 중 반복
             while(isPlaying) {
+                // Pause 상태인 경우 Decode 하지 않음
+                if(isPaused) {
+                    delay(100)
+                    continue
+                }
+
                 val inputIdx = mediaCodec.dequeueInputBuffer(0)
                 if(inputIdx >= 0) {
                     val inputBuffer = mediaCodec.getInputBuffer(inputIdx) ?: throw Exception("Buffer Error")
@@ -138,10 +145,16 @@ class VideoDecoder(
 
     // Render Coroutine 작업 생성
     private fun initVideoRenderJob() {
-        renderJob = CoroutineScope(Dispatchers.IO).launch {
+        renderJob = CoroutineScope(Dispatchers.Default).launch {
             val bufferInfo = MediaCodec.BufferInfo()
             // Video Play 진행 중 반복
             while(isPlaying) {
+                // Pause 상태인 경우 Render 하지 않음
+                if(isPaused) {
+                    delay(100)
+                    continue
+                }
+
                 val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
                 if(outputIdx >= 0) {
                     mediaCodec.releaseOutputBuffer(outputIdx, true)
