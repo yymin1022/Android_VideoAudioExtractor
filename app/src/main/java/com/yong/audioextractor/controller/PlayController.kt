@@ -61,18 +61,14 @@ class PlayController: Controller() {
         // TextureView Surface Listener 지정
         textureView.surfaceTextureListener = textureViewListener
 
+        // Raw Resource에서 Video 파일을 열고 FD값 지정
+        videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
+
         return view
     }
 
     // TextureView Surface Listener
     private val textureViewListener = object: TextureView.SurfaceTextureListener {
-        // TextureView Init 완료
-        override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-            // Raw Resource에서 Video 파일을 열고 FD값 지정
-            videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
-        }
-
-
         // TextureView 제거
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
             // Model 내 재생 중지 및 리소스 해제
@@ -83,6 +79,7 @@ class PlayController: Controller() {
         }
 
         // 구현하지 않는 메소드
+        override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
     }
