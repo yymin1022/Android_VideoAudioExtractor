@@ -116,7 +116,7 @@ class AudioDecoder(
         mediaCodec.start()
         audioTrack?.play()
 
-        decodeJob = CoroutineScope(Dispatchers.Default).launch {
+        decodeJob = CoroutineScope(Dispatchers.IO).launch {
             val bufferInfo = MediaCodec.BufferInfo()
 
             while(isPlaying()) {
