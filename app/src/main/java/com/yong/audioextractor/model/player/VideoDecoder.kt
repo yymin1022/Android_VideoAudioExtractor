@@ -95,46 +95,22 @@ class VideoDecoder(
                 }
 
                 // Input Buffer 요청
-                val inputIdx = mediaCodec.dequeueInputBuffer(0)
-                // Buffer가 읽을 수 있는 상태인 경우
-                if(inputIdx >= 0) {
-                    val inputBuffer = mediaCodec.getInputBuffer(inputIdx) ?: throw Exception("Buffer Error")
-                    // Buffer에서 Sample 데이터 읽기
-                    val sampleSize = mediaExtractor.readSampleData(inputBuffer, 0)
-
+                if(!getInputBuffer()) {
                     // 더이상 읽을 Sample 데이터가 없는 경우
-                    // 즉, 영상을 끝까지 재생한 경우
-                    if(sampleSize < 0) {
-                        // End Of Stream Flag 전달 후 종료
-                        mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                        onVideoEnd()
-                        break
-                    }
-
-                    // 현재 읽은 데이터의 타임스탬프 확인
-                    val sampleTime = mediaExtractor.sampleTime
-                    // Decoder에 읽어들인 데이터 추가
-                    mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
-                    // 다음 Frame으로 이동
-                    mediaExtractor.advance()
-
-                    // 보여진 Frame의 시간 업데이트
-                    lastFrameTime = sampleTime
+                    // 즉, 영상을 끝까지 재생한 경우에는 종료
+                    break
                 }
 
                 // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
                 syncTimestamp(lastFrameTime)
 
-                // 렌더링할 Output Buffer 읽기
-                val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
-                if(outputIdx >= 0) {
-                    // 데이터가 유효한 경우 렌더링
-                    mediaCodec.releaseOutputBuffer(outputIdx, true)
-                }
+                // 보여진 Frame의 시간 업데이트
+                lastFrameTime = getVideoSampleTime()
 
-                // Video가 끝난 Flag인 경우 종료
-                if((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    onVideoEnd()
+                // 렌더링할 Output Buffer 읽기
+                if(!processOutputBuffer(bufferInfo)) {
+                    // 더이상 읽을 Sample 데이터가 없는 경우
+                    // 즉, 영상을 끝까지 재생한 경우에는 종료
                     break
                 }
             }
@@ -152,6 +128,52 @@ class VideoDecoder(
     }
 
     fun getVideoSampleTime(): Long { return mediaExtractor.sampleTime }
+
+    private fun getInputBuffer(): Boolean {
+        // Input Buffer 요청
+        val inputIdx = mediaCodec.dequeueInputBuffer(0)
+        // Buffer가 읽을 수 있는 상태인 경우
+        if(inputIdx >= 0) {
+            val inputBuffer = mediaCodec.getInputBuffer(inputIdx) ?: throw Exception("Buffer Error")
+            // Buffer에서 Sample 데이터 읽기
+            val sampleSize = mediaExtractor.readSampleData(inputBuffer, 0)
+
+            // 더이상 읽을 Sample 데이터가 없는 경우
+            // 즉, 영상을 끝까지 재생한 경우
+            if(sampleSize < 0) {
+                // End Of Stream Flag 전달 후 종료
+                mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                onVideoEnd()
+                return false
+            }
+
+            // 현재 읽은 데이터의 타임스탬프 확인
+            val sampleTime = mediaExtractor.sampleTime
+            // Decoder에 읽어들인 데이터 추가
+            mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
+            // 다음 Frame으로 이동
+            mediaExtractor.advance()
+        }
+
+        return true
+    }
+
+    // 렌더링할 Output Buffer 읽기
+    private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
+        val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
+        if(outputIdx >= 0) {
+            // 데이터가 유효한 경우 렌더링
+            mediaCodec.releaseOutputBuffer(outputIdx, true)
+        }
+
+        // Video가 끝난 Flag인 경우 종료
+        if((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+            onVideoEnd()
+            return false
+        }
+
+        return true
+    }
 
     // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
     private suspend fun syncTimestamp(lastFrameTime: Long) {

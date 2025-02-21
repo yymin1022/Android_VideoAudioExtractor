@@ -166,7 +166,7 @@ class AudioDecoder(
     }
 
     // Input Buffer 요청
-    private suspend fun getInputBuffer(): Boolean {
+    private fun getInputBuffer(): Boolean {
         val inputIdx = mediaCodec.dequeueInputBuffer(0)
         // Buffer가 읽을 수 있는 상태인 경우
         if(inputIdx >= 0) {
@@ -193,8 +193,8 @@ class AudioDecoder(
         return true
     }
 
+    // 재생할 Output Buffer 읽기
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo) {
-        // 재생할 Output Buffer 읽기
         val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
         if(outputIdx >= 0) {
             // 데이터가 유효한 경우 재생
