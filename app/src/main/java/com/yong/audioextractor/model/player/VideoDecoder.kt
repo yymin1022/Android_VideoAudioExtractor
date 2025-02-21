@@ -77,7 +77,14 @@ class VideoDecoder(
         mediaCodec.start()
 
         decodeJob = CoroutineScope(Dispatchers.IO).launch {
+            // Decode를 시작한 System Time
+            val decodeStartTime = System.nanoTime()
+            // 직전 Frame의 시간
+            var lastFrameTime = 0L
+
+            // Codec에 지정된 Buffer 정보 확인
             val bufferInfo = MediaCodec.BufferInfo()
+            
             // Video Play 진행 중 반복
             while(isPlaying()) {
                 // Pause 상태인 경우 Decode 하지 않고 대기
@@ -109,6 +116,22 @@ class VideoDecoder(
                     mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
                     // 다음 Frame으로 이동
                     mediaExtractor.advance()
+
+                    // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
+                    if(lastFrameTime > 0L) {
+                        // Decode 시작 시간으로부터 현재까지 경과한 시간 계산
+                        // 정확도를 위해 Nano Time으로 계산 후 Millis로 변환
+                        val elapsedTime = (System.nanoTime() - decodeStartTime) / 1000000
+                        // 현재 Frame이 보여져야 할 시간과 경과 시간의 차 계산
+                        val delayOffset = sampleTime / 1000 - elapsedTime
+                        // 차이나는 시간만큼 Delay
+                        if(delayOffset > 0) {
+                            delay(delayOffset)
+                        }
+                    }
+
+                    // 보여진 Frame의 시간 업데이트
+                    lastFrameTime = sampleTime
                 }
 
                 // 렌더링할 Output Buffer 읽기
@@ -128,8 +151,10 @@ class VideoDecoder(
     }
 
     fun stopDecoding() {
+        // Decode Coroutine 종료
         decodeJob?.cancel()
 
+        // Media Codec 및 Extractor 해제/종료
         mediaCodec.stop()
         mediaCodec.release()
         mediaExtractor.release()
