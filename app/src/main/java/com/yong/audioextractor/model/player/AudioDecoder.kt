@@ -41,11 +41,11 @@ class AudioDecoder(
         initAudioTrack(audioTrack)
     }
 
+    // AudioTrack 초기화
     private fun initAudioTrack(trackNum: Int) {
         // Track의 Format 확인
         val trackFormat = mediaExtractor.getTrackFormat(trackNum)
 
-        // AudioTrack 초기화
         // Format을 16bit PCM으로 지정
         val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         // SampleRate는 Track Format 값에 따라 지정
@@ -54,15 +54,20 @@ class AudioDecoder(
         val channelConfig = if(trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) AudioFormat.CHANNEL_OUT_MONO
                             else AudioFormat.CHANNEL_OUT_STEREO
 
+        // AudioTrack 객체 생성 및 초기화
         val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
+                // Audio 속성
                 AudioAttributes.Builder()
+                    // 일반 Media로 지정
                     .setUsage(AudioAttributes.USAGE_MEDIA)
+                    // Music Type 지정
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
             .setAudioFormat(
+                // Audio 형식을 지정된 값들로 초기화
                 AudioFormat.Builder()
                     .setEncoding(audioFormat)
                     .setSampleRate(sampleRate)
@@ -113,39 +118,55 @@ class AudioDecoder(
     }
 
     fun startDecoding() {
+        // Decoder 및 Track 시작
         mediaCodec.start()
         audioTrack?.play()
 
-        decodeJob = CoroutineScope(Dispatchers.IO).launch {
+        decodeJob = CoroutineScope(Dispatchers.Default).launch {
+            // Codec에 지정된 Buffer 정보 확인
             val bufferInfo = MediaCodec.BufferInfo()
 
+            // Video Play 진행 중 반복
             while(isPlaying()) {
+                // Pause 상태인 경우 Decode 하지 않고 대기
                 if(isPaused()) {
                     delay(100)
                     continue
                 }
 
+                // Input Buffer 요청
                 val inputIdx = mediaCodec.dequeueInputBuffer(0)
+                // Buffer가 읽을 수 있는 상태인 경우
                 if(inputIdx >= 0) {
                     val inputBuffer = mediaCodec.getInputBuffer(inputIdx)
+                    // Buffer에서 Sample 데이터 읽기
                     val sampleSize = mediaExtractor.readSampleData(inputBuffer!!, 0)
 
+                    // 더이상 읽을 Sample 데이터가 없는 경우
+                    // 즉, 영상을 끝까지 재생한 경우
                     if(sampleSize < 0) {
+                        // End Of Stream Flag 전달 후 종료
                         mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                         break
                     }
 
-                    mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, mediaExtractor.sampleTime, 0)
+                    // 현재 읽은 데이터의 타임스탬프 확인
+                    val sampleTime = mediaExtractor.sampleTime
+                    // Decoder에 읽어들인 데이터 추가
+                    mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
                     mediaExtractor.advance()
                 }
 
+                // 재생할 Output Buffer 읽기
                 val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
                 if(outputIdx >= 0) {
+                    // 데이터가 유효한 경우 재생
                     val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)
                     val chunk = ByteArray(bufferInfo.size)
                     outputBuffer?.get(chunk)
                     outputBuffer?.clear()
 
+                    // Track에 재생할 Sample 추가
                     audioTrack?.write(chunk, 0, chunk.size)
                     mediaCodec.releaseOutputBuffer(outputIdx, false)
                 }
@@ -154,12 +175,14 @@ class AudioDecoder(
     }
 
     fun stopDecoding() {
+        // Decode Coroutine 종료
         decodeJob?.cancel()
 
+        // Media Codec 및 Extractor, Audio Track 해제/종료
+        audioTrack?.stop()
+        audioTrack?.release()
         mediaCodec.stop()
         mediaCodec.release()
         mediaExtractor.release()
-        audioTrack?.stop()
-        audioTrack?.release()
     }
 }

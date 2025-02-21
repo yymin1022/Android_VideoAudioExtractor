@@ -76,7 +76,7 @@ class VideoDecoder(
         // Decoder 시작
         mediaCodec.start()
 
-        decodeJob = CoroutineScope(Dispatchers.IO).launch {
+        decodeJob = CoroutineScope(Dispatchers.Default).launch {
             // Decode를 시작한 System Time
             val decodeStartTime = System.nanoTime()
             // 직전 Frame의 시간
