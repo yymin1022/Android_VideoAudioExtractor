@@ -13,15 +13,17 @@ class M4aMuxer(
     private lateinit var mediaMuxer: MediaMuxer
     private var trackNum = -1
 
-    fun writeFile(context: Context, bufferList: List<ByteBuffer>) {
+    fun writeFile(context: Context, bufferList: List<Pair<Long, ByteBuffer>>) {
         initMuxer(context)
 
-        bufferList.forEach { buffer ->
-            buffer.position(0)
+        bufferList.forEach { data ->
+            val presentationTime = data.first
+            val buffer = data.second
 
+            buffer.position(0)
             val bufferInfo = MediaCodec.BufferInfo().apply {
                 size = buffer.remaining()
-                presentationTimeUs = 0
+                presentationTimeUs = presentationTime
                 offset = 0
                 flags = 0
             }

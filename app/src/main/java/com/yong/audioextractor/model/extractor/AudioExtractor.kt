@@ -1,5 +1,6 @@
 package com.yong.audioextractor.model.extractor
 
+import android.content.Context
 import android.content.res.AssetFileDescriptor
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -7,7 +8,7 @@ import android.media.MediaFormat
 class AudioExtractor {
     private lateinit var mediaExtractor: MediaExtractor
 
-    fun extractAudio(videoFd: AssetFileDescriptor) {
+    fun extractAudio(context: Context, videoFd: AssetFileDescriptor) {
         initExtractor(videoFd)
 
         val trackNum = getAudioTrack() ?: throw Exception("No Audio Track")
@@ -16,7 +17,7 @@ class AudioExtractor {
         val pcmData = pcmDecoder.decodePcm()
 
         val m4aMuxer = M4aMuxer(mediaExtractor.getTrackFormat(trackNum))
-        m4aMuxer.writeFile(pcmData)
+        m4aMuxer.writeFile(context, pcmData)
         m4aMuxer.close()
 
         mediaExtractor.release()

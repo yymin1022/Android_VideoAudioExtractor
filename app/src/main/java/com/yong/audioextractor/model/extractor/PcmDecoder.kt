@@ -9,9 +9,9 @@ class PcmDecoder(
     private val mediaExtractor: MediaExtractor
 ) {
     private lateinit var mediaCodec: MediaCodec
-    private lateinit var resultBuffer: MutableList<ByteBuffer>
+    private lateinit var resultBuffer: MutableList<Pair<Long, ByteBuffer>>
 
-    fun decodePcm(): List<ByteBuffer> {
+    fun decodePcm(): List<Pair<Long, ByteBuffer>> {
         initDecoder(mediaExtractor.sampleTrackIndex)
 
         val bufferInfo = MediaCodec.BufferInfo()
@@ -77,7 +77,7 @@ class PcmDecoder(
             val chunk = ByteArray(bufferInfo.size)
             outputBuffer?.get(chunk)
             // Result Buffer에 데이터 추가
-            resultBuffer.add(ByteBuffer.wrap(chunk))
+            resultBuffer.add(Pair(bufferInfo.presentationTimeUs, ByteBuffer.wrap(chunk)))
             // 처리한 Buffer 비우기
             mediaCodec.releaseOutputBuffer(outputIdx, false)
 
