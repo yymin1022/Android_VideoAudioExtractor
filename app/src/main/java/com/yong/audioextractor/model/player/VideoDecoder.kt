@@ -115,6 +115,10 @@ class VideoDecoder(
 
     fun stopDecoding() {
         decodeJob?.cancel()
+
+        mediaCodec.stop()
+        mediaCodec.release()
+        mediaExtractor.release()
     }
 
     fun getMediaCodec(): MediaCodec { return mediaCodec }

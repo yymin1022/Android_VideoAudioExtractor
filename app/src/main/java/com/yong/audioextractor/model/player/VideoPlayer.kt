@@ -4,8 +4,8 @@ import android.content.res.AssetFileDescriptor
 import android.view.Surface
 
 /**
- * VideoDecoder
- * - Video를 Decode하고 재생하기 위한 Model
+ * VideoPlayer
+ * - 파일의 Audio/Video를 Decode하고 재생하기 위한 Model
  */
 class VideoPlayer {
     // 재생 중 상태를 표기하기 위한 Field
@@ -14,14 +14,21 @@ class VideoPlayer {
     fun isVideoPaused() = isPaused
     fun isVideoPlaying() = isPlaying
 
+    private val audioDecoder = AudioDecoder(::isVideoPaused, ::isVideoPlaying)
     private val videoDecoder = VideoDecoder(::isVideoPaused, ::isVideoPlaying, ::onVideoEnded)
     private lateinit var videoRenderer: VideoRenderer
 
     // Video Play 시작
     fun startVideoPlay(videoFd: AssetFileDescriptor, surface: Surface) {
+        // Audio/Video Decoder 초기화
+        audioDecoder.init(videoFd)
         videoDecoder.init(videoFd, surface)
+
+        // Audio/Video Decoder 시작
+        audioDecoder.startDecoding()
         videoDecoder.startDecoding()
 
+        // Video Render 초기화 및 시작
         val mediaCodec = videoDecoder.getMediaCodec()
         videoRenderer = VideoRenderer(mediaCodec, ::isVideoPaused, ::isVideoPlaying, ::onVideoEnded)
         videoRenderer.startRendering()
@@ -43,10 +50,12 @@ class VideoPlayer {
     fun stopVideoPlay() {
         isPlaying = false
 
-        // Decoder 작업 종료
-        videoDecoder.stopDecoding()
-        // Render 작업 종료
+        // Video Renderer 작업 종료
         videoRenderer.stopRendering()
+
+        // Audio/Video Decoder 작업 종료
+        audioDecoder.stopDecoding()
+        videoDecoder.stopDecoding()
     }
 
     private fun onVideoEnded() {

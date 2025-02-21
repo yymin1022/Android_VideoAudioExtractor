@@ -29,7 +29,7 @@ class VideoRenderer(
                 }
 
                 // 렌더링할 Output Buffer 읽기
-                val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0) ?: throw Exception()
+                val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
                 if(outputIdx >= 0) {
                     // 데이터가 유효한 경우 렌더링
                     mediaCodec.releaseOutputBuffer(outputIdx, true)
