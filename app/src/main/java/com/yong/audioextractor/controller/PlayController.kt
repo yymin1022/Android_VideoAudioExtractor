@@ -61,9 +61,6 @@ class PlayController: Controller() {
         // TextureView Surface Listener 지정
         textureView.surfaceTextureListener = textureViewListener
 
-        // Raw Resource에서 Video 파일을 열고 FD값 지정
-        videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
-
         return view
     }
 
@@ -102,6 +99,9 @@ class PlayController: Controller() {
 
             // Video Play Start
             btnPlay -> {
+                // Raw Resource에서 Video 파일을 열고 FD값 지정
+                videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
+
                 videoFd?.use { fd ->
                     // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
                     if(!videoPlayer.isVideoPlaying()) {
@@ -115,7 +115,10 @@ class PlayController: Controller() {
             // Video Play Stop
             btnStop -> {
                 if(videoPlayer.isVideoPlaying()) {
+                    // Model 내 재생 중지 및 리소스 해제
                     videoPlayer.stopVideoPlay()
+                    // Video File Close
+                    videoFd?.close()
                 }
             }
         }
