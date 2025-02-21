@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.bluelinelabs.conductor.Controller
 import com.yong.audioextractor.R
-import com.yong.audioextractor.model.AudioExtractor
+import com.yong.audioextractor.model.extractor.AudioExtractor
 
 class ExtractController: Controller() {
     // Audio Extractor Model 선언

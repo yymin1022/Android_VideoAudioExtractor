@@ -13,7 +13,7 @@ import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.RouterTransaction
 import com.google.android.material.button.MaterialButton
 import com.yong.audioextractor.R
-import com.yong.audioextractor.model.VideoPlayer
+import com.yong.audioextractor.model.player.VideoPlayer
 
 /**
  * PlayController

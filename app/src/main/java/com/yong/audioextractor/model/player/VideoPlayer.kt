@@ -1,4 +1,4 @@
-package com.yong.audioextractor.model
+package com.yong.audioextractor.model.player
 
 import android.content.res.AssetFileDescriptor
 import android.media.MediaCodec
