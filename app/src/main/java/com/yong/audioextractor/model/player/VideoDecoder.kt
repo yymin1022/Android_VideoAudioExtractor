@@ -161,8 +161,8 @@ class VideoDecoder(
     // 렌더링할 Output Buffer 읽기
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
         val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
-        if(outputIdx >= 0) {
-            // 데이터가 유효한 경우 렌더링
+        // 여전히 재생중이고 데이터가 유효하다면 Buffer Release(렌더링) 호출
+        if(isPlaying() && outputIdx >= 0) {
             mediaCodec.releaseOutputBuffer(outputIdx, true)
         }
 
