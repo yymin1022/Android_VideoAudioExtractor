@@ -211,7 +211,7 @@ class AudioDecoder(
 
     // Video와의 Time Sync 확인
     private suspend fun syncTimestamp() {
-        while(true) {
+        while(isPlaying()) {
             // Audio 및 Video 각각의 Sample Time 확인
             val audioSampleTime = mediaExtractor.sampleTime
             val videoSampleTime = getVideoSampleTime()
