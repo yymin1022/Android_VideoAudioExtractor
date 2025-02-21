@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
  * VideoDecoder
  * - Video를 Decode하고 재생하기 위한 Model
  */
-class VideoDecoder {
+class VideoPlayer {
     // Video 정보 확인을 위한 Media Extractor
     private lateinit var mediaExtractor: MediaExtractor
     // Video Decode를 위한 Media Codec

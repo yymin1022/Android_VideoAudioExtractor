@@ -13,7 +13,7 @@ import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.RouterTransaction
 import com.google.android.material.button.MaterialButton
 import com.yong.audioextractor.R
-import com.yong.audioextractor.model.VideoDecoder
+import com.yong.audioextractor.model.VideoPlayer
 
 /**
  * PlayController
@@ -36,7 +36,7 @@ class PlayController: Controller() {
     // Video Asset File Descriptor
     private var videoFd: AssetFileDescriptor? = null
     // Video Decoder Model
-    private val videoDecoder = VideoDecoder()
+    private val videoPlayer = VideoPlayer()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,7 +76,7 @@ class PlayController: Controller() {
         // TextureView 제거
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
             // Model 내 재생 중지 및 리소스 해제
-            videoDecoder.stopVideoPlay()
+            videoPlayer.stopVideoPlay()
             // Video File Close
             videoFd?.close()
             return true
@@ -98,8 +98,8 @@ class PlayController: Controller() {
 
             // Video Play Pause
             btnPause -> {
-                if(videoDecoder.isPlaying) {
-                    videoDecoder.pauseVideoPlay()
+                if(videoPlayer.isPlaying) {
+                    videoPlayer.pauseVideoPlay()
                 }
             }
 
@@ -107,18 +107,18 @@ class PlayController: Controller() {
             btnPlay -> {
                 videoFd?.use { fd ->
                     // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
-                    if(!videoDecoder.isPlaying) {
-                        videoDecoder.startVideoPlay(fd, Surface(textureView.surfaceTexture))
-                    } else if(videoDecoder.isPaused) {
-                        videoDecoder.resumeVideoPlay()
+                    if(!videoPlayer.isPlaying) {
+                        videoPlayer.startVideoPlay(fd, Surface(textureView.surfaceTexture))
+                    } else if(videoPlayer.isPaused) {
+                        videoPlayer.resumeVideoPlay()
                     }
                 }
             }
 
             // Video Play Stop
             btnStop -> {
-                if(videoDecoder.isPlaying) {
-                    videoDecoder.stopVideoPlay()
+                if(videoPlayer.isPlaying) {
+                    videoPlayer.stopVideoPlay()
                 }
             }
         }
