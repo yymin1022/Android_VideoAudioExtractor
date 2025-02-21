@@ -118,6 +118,7 @@ class AudioDecoder(
         return null
     }
 
+    // Decoding 작업 시작
     fun startDecoding() {
         // Decoder 및 Track 시작
         mediaCodec.start()
@@ -158,19 +159,8 @@ class AudioDecoder(
                     mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
                     mediaExtractor.advance()
 
-                    // Video와의 Sync 확인
-                    while(true) {
-                        // Audio 및 Video 각각의 Sample Time 확인
-                        val audioSampleTime = mediaExtractor.sampleTime
-                        val videoSampleTime = getVideoSampleTime()
-
-                        // Audio가 10ms 이상 앞서는 경우 Delay
-                        if(audioSampleTime > videoSampleTime + 10000) delay(5)
-                        // Video가 10ms 이상 앞서는 경우 Audio Advance 호출
-                        else if(audioSampleTime < videoSampleTime - 10000) mediaExtractor.advance()
-                        // Sync가 10ms 이하로 맞는 경우 종료
-                        else break
-                    }
+                    // Video와의 Time Sync 확인
+                    syncTimestamp()
                 }
 
                 // 재생할 Output Buffer 읽기
@@ -190,6 +180,7 @@ class AudioDecoder(
         }
     }
 
+    // Decoding 작업 종료
     fun stopDecoding() {
         // Decode Coroutine 종료
         decodeJob?.cancel()
@@ -200,5 +191,21 @@ class AudioDecoder(
         mediaCodec.stop()
         mediaCodec.release()
         mediaExtractor.release()
+    }
+
+    // Video와의 Time Sync 확인
+    private suspend fun syncTimestamp() {
+        while(true) {
+            // Audio 및 Video 각각의 Sample Time 확인
+            val audioSampleTime = mediaExtractor.sampleTime
+            val videoSampleTime = getVideoSampleTime()
+
+            // Audio가 10ms 이상 앞서는 경우 Delay
+            if(audioSampleTime > videoSampleTime + 10000) delay(5)
+            // Video가 10ms 이상 앞서는 경우 Audio Advance 호출
+            else if(audioSampleTime < videoSampleTime - 10000) mediaExtractor.advance()
+            // Sync가 10ms 이하로 맞는 경우 종료
+            else break
+        }
     }
 }
