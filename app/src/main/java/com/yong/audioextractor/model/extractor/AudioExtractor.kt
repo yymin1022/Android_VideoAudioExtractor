@@ -11,6 +11,15 @@ class AudioExtractor {
         initExtractor(videoFd)
 
         val trackNum = getAudioTrack() ?: throw Exception("No Audio Track")
+
+        val pcmDecoder = PcmDecoder(mediaExtractor)
+        val pcmData = pcmDecoder.decodePcm()
+
+        val m4aMuxer = M4aMuxer(mediaExtractor.getTrackFormat(trackNum))
+        m4aMuxer.writeFile(pcmData)
+        m4aMuxer.close()
+
+        mediaExtractor.release()
     }
 
     // MediaExtractor 초기화

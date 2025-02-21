@@ -9,4 +9,8 @@ class M4aMuxer(
     fun writeFile(bufferList: List<ByteBuffer>) {
 
     }
+
+    fun close() {
+
+    }
 }
