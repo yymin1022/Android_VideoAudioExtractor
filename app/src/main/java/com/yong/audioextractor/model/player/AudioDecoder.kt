@@ -205,7 +205,11 @@ class AudioDecoder(
 
             // Track에 재생할 Sample 추가
             audioTrack?.write(chunk, 0, chunk.size)
-            mediaCodec.releaseOutputBuffer(outputIdx, false)
+
+            // 여전히 재생중이라면 Buffer Release 호출
+            if(isPlaying()) {
+                mediaCodec.releaseOutputBuffer(outputIdx, false)
+            }
         }
     }
 
