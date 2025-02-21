@@ -15,7 +15,8 @@ import kotlinx.coroutines.launch
 
 class AudioDecoder(
     private val isPaused: () -> Boolean,
-    private val isPlaying: () -> Boolean
+    private val isPlaying: () -> Boolean,
+    private val getVideoSampleTime: () -> Long
 ) {
     // Audio Decoding을 위한 Media Codec
     private lateinit var mediaCodec: MediaCodec
@@ -150,11 +151,26 @@ class AudioDecoder(
                         break
                     }
 
+
                     // 현재 읽은 데이터의 타임스탬프 확인
                     val sampleTime = mediaExtractor.sampleTime
                     // Decoder에 읽어들인 데이터 추가
                     mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
                     mediaExtractor.advance()
+
+                    // Video와의 Sync 확인
+                    while(true) {
+                        // Audio 및 Video 각각의 Sample Time 확인
+                        val audioSampleTime = mediaExtractor.sampleTime
+                        val videoSampleTime = getVideoSampleTime()
+
+                        // Audio가 10ms 이상 앞서는 경우 Delay
+                        if(audioSampleTime > videoSampleTime + 10000) delay(5)
+                        // Video가 10ms 이상 앞서는 경우 Audio Advance 호출
+                        else if(audioSampleTime < videoSampleTime - 10000) mediaExtractor.advance()
+                        // Sync가 10ms 이하로 맞는 경우 종료
+                        else break
+                    }
                 }
 
                 // 재생할 Output Buffer 읽기

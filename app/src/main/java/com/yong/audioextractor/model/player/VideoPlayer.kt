@@ -14,11 +14,12 @@ class VideoPlayer {
     fun isVideoPaused() = isPaused
     fun isVideoPlaying() = isPlaying
 
-    private val audioDecoder = AudioDecoder(::isVideoPaused, ::isVideoPlaying)
+    private val audioDecoder = AudioDecoder(::isVideoPaused, ::isVideoPlaying, ::getVideoSampleTime)
     private val videoDecoder = VideoDecoder(::isVideoPaused, ::isVideoPlaying, ::onVideoEnded)
 
     // Video Play 시작
     fun startVideoPlay(videoFd: AssetFileDescriptor, surface: Surface) {
+        isPlaying = true
         // Audio/Video Decoder 초기화
         audioDecoder.init(videoFd)
         videoDecoder.init(videoFd, surface)
@@ -26,7 +27,6 @@ class VideoPlayer {
         // Audio/Video Decoder 시작
         audioDecoder.startDecoding()
         videoDecoder.startDecoding()
-        isPlaying = true
     }
 
     // 일시 정지된 Video Play 계속 진행
@@ -51,4 +51,6 @@ class VideoPlayer {
     private fun onVideoEnded() {
         stopVideoPlay()
     }
+
+    private fun getVideoSampleTime(): Long { return videoDecoder.getVideoSampleTime() }
 }

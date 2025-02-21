@@ -159,4 +159,6 @@ class VideoDecoder(
         mediaCodec.release()
         mediaExtractor.release()
     }
+
+    fun getVideoSampleTime(): Long { return mediaExtractor.sampleTime }
 }
