@@ -16,7 +16,6 @@ class VideoPlayer {
 
     private val audioDecoder = AudioDecoder(::isVideoPaused, ::isVideoPlaying)
     private val videoDecoder = VideoDecoder(::isVideoPaused, ::isVideoPlaying, ::onVideoEnded)
-    private lateinit var videoRenderer: VideoRenderer
 
     // Video Play 시작
     fun startVideoPlay(videoFd: AssetFileDescriptor, surface: Surface) {
@@ -27,12 +26,6 @@ class VideoPlayer {
         // Audio/Video Decoder 시작
         audioDecoder.startDecoding()
         videoDecoder.startDecoding()
-
-        // Video Render 초기화 및 시작
-        val mediaCodec = videoDecoder.getMediaCodec()
-        videoRenderer = VideoRenderer(mediaCodec, ::isVideoPaused, ::isVideoPlaying, ::onVideoEnded)
-        videoRenderer.startRendering()
-
         isPlaying = true
     }
 
@@ -49,9 +42,6 @@ class VideoPlayer {
     // Video Play 종료
     fun stopVideoPlay() {
         isPlaying = false
-
-        // Video Renderer 작업 종료
-        videoRenderer.stopRendering()
 
         // Audio/Video Decoder 작업 종료
         audioDecoder.stopDecoding()
