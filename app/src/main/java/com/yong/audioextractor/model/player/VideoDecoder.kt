@@ -104,15 +104,15 @@ class VideoDecoder(
                 // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
                 syncTimestamp(lastFrameTime)
 
-                // 보여진 Frame의 시간 업데이트
-                lastFrameTime = getVideoSampleTime()
-
                 // 렌더링할 Output Buffer 읽기
                 if(!processOutputBuffer(bufferInfo)) {
                     // 더이상 읽을 Sample 데이터가 없는 경우
                     // 즉, 영상을 끝까지 재생한 경우에는 종료
                     break
                 }
+
+                // 보여진 Frame의 시간 업데이트
+                lastFrameTime = getVideoSampleTime()
             }
         }
     }
