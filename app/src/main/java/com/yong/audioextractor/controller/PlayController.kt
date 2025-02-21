@@ -98,7 +98,7 @@ class PlayController: Controller() {
 
             // Video Play Pause
             btnPause -> {
-                if(videoPlayer.isPlaying) {
+                if(videoPlayer.isVideoPlaying()) {
                     videoPlayer.pauseVideoPlay()
                 }
             }
@@ -107,9 +107,9 @@ class PlayController: Controller() {
             btnPlay -> {
                 videoFd?.use { fd ->
                     // 재생 중 상태에 따라 새로운 재생 Start 또는 Resume 호출
-                    if(!videoPlayer.isPlaying) {
+                    if(!videoPlayer.isVideoPlaying()) {
                         videoPlayer.startVideoPlay(fd, Surface(textureView.surfaceTexture))
-                    } else if(videoPlayer.isPaused) {
+                    } else if(videoPlayer.isVideoPaused()) {
                         videoPlayer.resumeVideoPlay()
                     }
                 }
@@ -117,7 +117,7 @@ class PlayController: Controller() {
 
             // Video Play Stop
             btnStop -> {
-                if(videoPlayer.isPlaying) {
+                if(videoPlayer.isVideoPlaying()) {
                     videoPlayer.stopVideoPlay()
                 }
             }
