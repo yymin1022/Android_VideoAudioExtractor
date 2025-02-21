@@ -23,6 +23,7 @@ class VideoDecoder(
 
     // Decoding 작업을 수행하기 위한 Coroutine Job
     private var decodeJob: Job? = null
+    private var decodeStartTime = 0L
 
     fun init(videoFd: AssetFileDescriptor, surface: Surface) {
         // MediaExtractor 초기화
@@ -78,7 +79,7 @@ class VideoDecoder(
 
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             // Decode를 시작한 System Time
-            val decodeStartTime = System.nanoTime()
+            decodeStartTime = System.nanoTime()
             // 직전 Frame의 시간
             var lastFrameTime = 0L
 
@@ -117,22 +118,12 @@ class VideoDecoder(
                     // 다음 Frame으로 이동
                     mediaExtractor.advance()
 
-                    // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
-                    if(lastFrameTime > 0L) {
-                        // Decode 시작 시간으로부터 현재까지 경과한 시간 계산
-                        // 정확도를 위해 Nano Time으로 계산 후 Millis로 변환
-                        val elapsedTime = (System.nanoTime() - decodeStartTime) / 1000000
-                        // 현재 Frame이 보여져야 할 시간과 경과 시간의 차 계산
-                        val delayOffset = sampleTime / 1000 - elapsedTime
-                        // 차이나는 시간만큼 Delay
-                        if(delayOffset > 0) {
-                            delay(delayOffset)
-                        }
-                    }
-
                     // 보여진 Frame의 시간 업데이트
                     lastFrameTime = sampleTime
                 }
+
+                // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
+                syncTimestamp(lastFrameTime)
 
                 // 렌더링할 Output Buffer 읽기
                 val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
@@ -161,4 +152,19 @@ class VideoDecoder(
     }
 
     fun getVideoSampleTime(): Long { return mediaExtractor.sampleTime }
+
+    // 현재 Frame이 보여져야 할 시간에 올바르게 보여지는지 재생 경과 시간 확인
+    private suspend fun syncTimestamp(lastFrameTime: Long) {
+        if(lastFrameTime > 0L) {
+            // Decode 시작 시간으로부터 현재까지 경과한 시간 계산
+            // 정확도를 위해 Nano Time으로 계산 후 Millis로 변환
+            val elapsedTime = (System.nanoTime() - decodeStartTime) / 1000000
+            // 현재 Frame이 보여져야 할 시간과 경과 시간의 차 계산
+            val delayOffset = getVideoSampleTime() / 1000 - elapsedTime
+            // 차이나는 시간만큼 Delay
+            if(delayOffset > 0) {
+                delay(delayOffset)
+            }
+        }
+    }
 }
