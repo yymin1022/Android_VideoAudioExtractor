@@ -137,45 +137,17 @@ class AudioDecoder(
                 }
 
                 // Input Buffer 요청
-                val inputIdx = mediaCodec.dequeueInputBuffer(0)
-                // Buffer가 읽을 수 있는 상태인 경우
-                if(inputIdx >= 0) {
-                    val inputBuffer = mediaCodec.getInputBuffer(inputIdx)
-                    // Buffer에서 Sample 데이터 읽기
-                    val sampleSize = mediaExtractor.readSampleData(inputBuffer!!, 0)
-
+                if(!getInputBuffer()) {
                     // 더이상 읽을 Sample 데이터가 없는 경우
-                    // 즉, 영상을 끝까지 재생한 경우
-                    if(sampleSize < 0) {
-                        // End Of Stream Flag 전달 후 종료
-                        mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                        break
-                    }
-
-
-                    // 현재 읽은 데이터의 타임스탬프 확인
-                    val sampleTime = mediaExtractor.sampleTime
-                    // Decoder에 읽어들인 데이터 추가
-                    mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
-                    mediaExtractor.advance()
-
-                    // Video와의 Time Sync 확인
-                    syncTimestamp()
+                    // 즉, 영상을 끝까지 재생한 경우에는 종료
+                    break
                 }
 
-                // 재생할 Output Buffer 읽기
-                val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
-                if(outputIdx >= 0) {
-                    // 데이터가 유효한 경우 재생
-                    val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)
-                    val chunk = ByteArray(bufferInfo.size)
-                    outputBuffer?.get(chunk)
-                    outputBuffer?.clear()
+                // Video와의 Time Sync 확인
+                syncTimestamp()
 
-                    // Track에 재생할 Sample 추가
-                    audioTrack?.write(chunk, 0, chunk.size)
-                    mediaCodec.releaseOutputBuffer(outputIdx, false)
-                }
+                // 재생할 Output Buffer 처리
+                processOutputBuffer(bufferInfo)
             }
         }
     }
@@ -193,12 +165,59 @@ class AudioDecoder(
         mediaExtractor.release()
     }
 
+    // Input Buffer 요청
+    private suspend fun getInputBuffer(): Boolean {
+        val inputIdx = mediaCodec.dequeueInputBuffer(0)
+        // Buffer가 읽을 수 있는 상태인 경우
+        if(inputIdx >= 0) {
+            val inputBuffer = mediaCodec.getInputBuffer(inputIdx)
+            // Buffer에서 Sample 데이터 읽기
+            val sampleSize = mediaExtractor.readSampleData(inputBuffer!!, 0)
+
+            // 더이상 읽을 Sample 데이터가 없는 경우
+            // 즉, 영상을 끝까지 재생한 경우
+            if(sampleSize < 0) {
+                // End Of Stream Flag 전달 후 종료
+                mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                return false
+            }
+
+
+            // 현재 읽은 데이터의 타임스탬프 확인
+            val sampleTime = mediaExtractor.sampleTime
+            // Decoder에 읽어들인 데이터 추가
+            mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
+            mediaExtractor.advance()
+        }
+
+        return true
+    }
+
+    private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo) {
+        // 재생할 Output Buffer 읽기
+        val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
+        if(outputIdx >= 0) {
+            // 데이터가 유효한 경우 재생
+            val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)
+            val chunk = ByteArray(bufferInfo.size)
+            outputBuffer?.get(chunk)
+            outputBuffer?.clear()
+
+            // Track에 재생할 Sample 추가
+            audioTrack?.write(chunk, 0, chunk.size)
+            mediaCodec.releaseOutputBuffer(outputIdx, false)
+        }
+    }
+
     // Video와의 Time Sync 확인
     private suspend fun syncTimestamp() {
         while(true) {
             // Audio 및 Video 각각의 Sample Time 확인
             val audioSampleTime = mediaExtractor.sampleTime
             val videoSampleTime = getVideoSampleTime()
+
+            // Sample Time이 올바르지 않은 경우 종료
+            if(audioSampleTime <= 0 || videoSampleTime <= 0) break
 
             // Audio가 10ms 이상 앞서는 경우 Delay
             if(audioSampleTime > videoSampleTime + 10000) delay(5)
