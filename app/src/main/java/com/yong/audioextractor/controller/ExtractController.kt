@@ -7,6 +7,9 @@ import android.view.ViewGroup
 import com.bluelinelabs.conductor.Controller
 import com.yong.audioextractor.R
 import com.yong.audioextractor.model.extractor.AudioExtractor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ExtractController: Controller() {
     // Audio Extractor Model 선언
@@ -18,6 +21,14 @@ class ExtractController: Controller() {
         savedViewState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.controller_extract, container, false)
+
+        val videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
+
+        CoroutineScope(Dispatchers.Main).launch {
+            audioExtractor.extractAudio(activity!!.applicationContext, videoFd)
+            router.popCurrentController()
+        }
+
         return view
     }
 
