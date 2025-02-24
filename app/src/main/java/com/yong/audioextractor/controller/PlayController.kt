@@ -64,25 +64,26 @@ class PlayController: Controller() {
         return view
     }
 
+    // Controller가 완전히 종료될 때 리소스 해제
+    override fun onDestroy() {
+        super.onDestroy()
+        // Model 내 재생 중지 및 리소스 해제
+        videoPlayer.stopVideoPlay()
+        // Video File Close
+        videoFd?.close()
+    }
+
     // TextureView Surface Listener
     private val textureViewListener = object: TextureView.SurfaceTextureListener {
         // Video의 진행 상황 업데이트
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
             progressPlay.progress = videoPlayer.getVideoPlayRate().toInt()
         }
-        
-        // TextureView 제거
-        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-            // Model 내 재생 중지 및 리소스 해제
-            videoPlayer.stopVideoPlay()
-            // Video File Close
-            videoFd?.close()
-            return true
-        }
 
         // 구현하지 않는 메소드
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean { return true }
     }
 
     // Button OnClickListener
@@ -103,6 +104,8 @@ class PlayController: Controller() {
 
             // Video Play Start
             btnPlay -> {
+                // 이미 파일이 열려있다면 File Close
+                videoFd?.close()
                 // Raw Resource에서 Video 파일을 열고 FD값 지정
                 videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
 
