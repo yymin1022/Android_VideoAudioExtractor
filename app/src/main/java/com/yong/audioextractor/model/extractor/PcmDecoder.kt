@@ -72,12 +72,15 @@ class PcmDecoder(
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
         val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
         if(outputIdx >= 0) {
-            // 데이터가 유효한 경우 재생
+            // 데이터가 유효한 경우 처리
             val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)
             val chunk = ByteArray(bufferInfo.size)
             outputBuffer?.get(chunk)
+            outputBuffer?.clear()
+
             // Result Buffer에 데이터 추가
             resultBuffer.add(Pair(bufferInfo.presentationTimeUs, ByteBuffer.wrap(chunk)))
+
             // 처리한 Buffer 비우기
             mediaCodec.releaseOutputBuffer(outputIdx, false)
 
