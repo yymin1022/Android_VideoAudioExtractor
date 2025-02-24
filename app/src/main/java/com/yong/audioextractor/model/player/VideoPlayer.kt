@@ -48,6 +48,8 @@ class VideoPlayer {
         videoDecoder.stopDecoding()
     }
 
+    // 현재 재생중인 Video의 진행률 반환
     fun getVideoPlayRate(): Float { return videoDecoder.getVideoPlayRate() }
+    // 현재 재생한 Frame의 Sample Time 반환
     private fun getVideoSampleTime(): Long { return videoDecoder.getVideoSampleTime() }
 }
