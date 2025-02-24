@@ -91,6 +91,14 @@ class PlayController: Controller() {
         when(view) {
             // Extract Audio
             btnExtract -> {
+                // Video가 재생중인 경우 종료
+                if(videoPlayer.isVideoPlaying()) {
+                    // Model 내 재생 중지 및 리소스 해제
+                    videoPlayer.stopVideoPlay()
+                    // Video File Close
+                    videoFd?.close()
+                }
+
                 // Router에 ExtractController Push
                 router.pushController(RouterTransaction.with(ExtractController()))
             }
@@ -105,7 +113,6 @@ class PlayController: Controller() {
             // Video Play Start
             btnPlay -> {
                 // 이미 파일이 열려있다면 File Close
-                videoFd?.close()
                 // Raw Resource에서 Video 파일을 열고 FD값 지정
                 videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
 
