@@ -13,9 +13,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * AudioDecoder
+ * - 파일의 Audio Track을 찾고, Decode해 재생하기 위한 Model
+ */
 class AudioDecoder(
+    // 재생 및 일시정지 상태를 확인하기 위한 Field 함수
     private val isPaused: () -> Boolean,
     private val isPlaying: () -> Boolean,
+    // Video의 현재 재생 시간을 확인하기 위한 함수
     private val getVideoSampleTime: () -> Long
 ) {
     // Audio Decoding을 위한 Media Codec
@@ -28,6 +34,7 @@ class AudioDecoder(
     // Decoding 작업을 수행하기 위한 Coroutine Job
     private var decodeJob: Job? = null
 
+    // 초기화
     fun init(audioFd: AssetFileDescriptor) {
         // MediaExtractor 초기화
         // Video FD에서 파일을 읽어 Source로 지정
@@ -51,7 +58,7 @@ class AudioDecoder(
         val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         // SampleRate는 Track Format 값에 따라 지정
         val sampleRate = trackFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-        // Stereo 여부는 Track Fromat 값에 따라 지정
+        // Stereo 여부는 Track Format 값에 따라 지정
         val channelConfig = if(trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) AudioFormat.CHANNEL_OUT_MONO
                             else AudioFormat.CHANNEL_OUT_STEREO
 
@@ -118,12 +125,13 @@ class AudioDecoder(
         return null
     }
 
-    // Decoding 작업 시작
+    // Decoding 시작
     fun startDecoding() {
         // Decoder 및 Track 시작
         mediaCodec.start()
         audioTrack?.play()
 
+        // Decoder Coroutine 작업 생성
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             // Codec에 지정된 Buffer 정보 확인
             val bufferInfo = MediaCodec.BufferInfo()
@@ -152,7 +160,7 @@ class AudioDecoder(
         }
     }
 
-    // Decoding 작업 종료
+    // Decoding 종료
     fun stopDecoding() {
         // Decode Coroutine 종료
         decodeJob?.cancel()

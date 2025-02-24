@@ -149,8 +149,8 @@ class VideoDecoder(
     // 현재 재생중인 Video의 진행률 반환
     fun getVideoPlayRate(): Float { return getVideoSampleTime().toFloat() / videoTotalTime * 100 }
 
+    // Input Buffer 요청
     private fun getInputBuffer(): Boolean {
-        // Input Buffer 요청
         val inputIdx = mediaCodec.dequeueInputBuffer(0)
         // Buffer가 읽을 수 있는 상태인 경우
         if(inputIdx >= 0) {
