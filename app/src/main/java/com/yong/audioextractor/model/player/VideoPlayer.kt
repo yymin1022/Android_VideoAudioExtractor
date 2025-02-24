@@ -15,7 +15,7 @@ class VideoPlayer {
     fun isVideoPlaying() = isPlaying
 
     private val audioDecoder = AudioDecoder(::isVideoPaused, ::isVideoPlaying, ::getVideoSampleTime)
-    private val videoDecoder = VideoDecoder(::isVideoPaused, ::isVideoPlaying, ::onVideoEnded)
+    private val videoDecoder = VideoDecoder(::isVideoPaused, ::isVideoPlaying, ::stopVideoPlay)
 
     // Video Play 시작
     fun startVideoPlay(videoFd: AssetFileDescriptor, surface: Surface) {
@@ -48,9 +48,6 @@ class VideoPlayer {
         videoDecoder.stopDecoding()
     }
 
-    private fun onVideoEnded() {
-        stopVideoPlay()
-    }
-
+    fun getVideoPlayRate(): Float { return videoDecoder.getVideoPlayRate() }
     private fun getVideoSampleTime(): Long { return videoDecoder.getVideoSampleTime() }
 }

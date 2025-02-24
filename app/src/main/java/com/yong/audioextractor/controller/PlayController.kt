@@ -66,6 +66,11 @@ class PlayController: Controller() {
 
     // TextureView Surface Listener
     private val textureViewListener = object: TextureView.SurfaceTextureListener {
+        // Video의 진행 상황 업데이트
+        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+            progressPlay.progress = videoPlayer.getVideoPlayRate().toInt()
+        }
+        
         // TextureView 제거
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
             // Model 내 재생 중지 및 리소스 해제
@@ -78,7 +83,6 @@ class PlayController: Controller() {
         // 구현하지 않는 메소드
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
-        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
     }
 
     // Button OnClickListener

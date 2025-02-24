@@ -25,6 +25,8 @@ class VideoDecoder(
     private var decodeJob: Job? = null
     private var decodeStartTime = 0L
 
+    private var videoTotalTime = 0L
+
     fun init(videoFd: AssetFileDescriptor, surface: Surface) {
         // MediaExtractor 초기화
         // Video FD에서 파일을 읽어 Source로 지정
@@ -39,11 +41,16 @@ class VideoDecoder(
 
     // 탐색한 Track으로 MediaCodec Decoder 초기화
     private fun initDecoder(trackNum: Int, surface: Surface) {
+        // 현재 Track의 Format 정보 확인
+        val videoFormat = mediaExtractor.getTrackFormat(trackNum)
+        // Video의 전체 길이 확인
+        videoTotalTime = videoFormat.getLong(MediaFormat.KEY_DURATION)
+
         // video/avc MIME Type 지정
         mediaCodec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
         // 탐색한 Track을 지정과 렌더링할 Surface를 지정
         // Crypto와 Flag는 지정하지 않음
-        mediaCodec.configure(mediaExtractor.getTrackFormat(trackNum), surface, null, 0)
+        mediaCodec.configure(videoFormat, surface, null, 0)
     }
 
     // MediaExtractor 초기화
@@ -127,7 +134,10 @@ class VideoDecoder(
         mediaExtractor.release()
     }
 
+    // 현재 재생한 Frame의 Sample Time 반환
     fun getVideoSampleTime(): Long { return mediaExtractor.sampleTime }
+    // 현재 재생중인 Video의 진행률 반환
+    fun getVideoPlayRate(): Float { return getVideoSampleTime().toFloat() / videoTotalTime * 100 }
 
     private fun getInputBuffer(): Boolean {
         // Input Buffer 요청
