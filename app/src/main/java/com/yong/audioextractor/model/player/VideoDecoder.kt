@@ -11,9 +11,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * VideoDecoder
+ * - 파일의 Video Track을 찾고, Decode해 재생하기 위한 Model
+ */
 class VideoDecoder(
+    // 재생 및 일시정지 상태를 확인하기 위한 Field 함수
     private val isPaused: () -> Boolean,
     private val isPlaying: () -> Boolean,
+    // Video 재생 종료를 처리하기 위한 Callback 함수
     private val onVideoEnd: () -> Unit
 ) {
     // Video Decoding을 위한 Media Codec
@@ -23,10 +29,12 @@ class VideoDecoder(
 
     // Decoding 작업을 수행하기 위한 Coroutine Job
     private var decodeJob: Job? = null
+    // Decoding 시작 시간 기록
     private var decodeStartTime = 0L
-
+    // Video의 전체 재생 시간 기록
     private var videoTotalTime = 0L
 
+    // 초기화
     fun init(videoFd: AssetFileDescriptor, surface: Surface) {
         // MediaExtractor 초기화
         // Video FD에서 파일을 읽어 Source로 지정
@@ -79,11 +87,12 @@ class VideoDecoder(
         return null
     }
 
-    // Decoder Coroutine 작업 생성
+    // Decoding 시작
     fun startDecoding() {
         // Decoder 시작
         mediaCodec.start()
 
+        // Decoder Coroutine 작업 생성
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             // Decode를 시작한 System Time
             decodeStartTime = System.nanoTime()
@@ -124,6 +133,7 @@ class VideoDecoder(
         }
     }
 
+    // Decoding 종료
     fun stopDecoding() {
         // Decode Coroutine 종료
         decodeJob?.cancel()
