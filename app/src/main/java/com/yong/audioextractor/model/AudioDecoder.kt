@@ -1,6 +1,7 @@
 package com.yong.audioextractor.model
 
 import android.media.MediaCodec
+import android.media.MediaCodec.BufferInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 
@@ -27,5 +28,29 @@ class AudioDecoder(
         // MediaCodec Configure 및 시작
         mediaCodec.configure(trackFormat, null, null, 0)
         mediaCodec.start()
+    }
+
+    fun startDecoding() {
+        var isInputEOS = false
+        var isOutputEOS = false
+
+        val bufferInfo = MediaCodec.BufferInfo()
+        while(!isOutputEOS) {
+            if(!isInputEOS && !getInputBuffer()) {
+                isInputEOS = true
+            }
+
+            if(processOutputBuffer(bufferInfo)) {
+                isOutputEOS = true
+            }
+        }
+    }
+
+    private fun getInputBuffer(): Boolean {
+        return true
+    }
+
+    private fun processOutputBuffer(bufferInfo: BufferInfo): Boolean {
+        return true
     }
 }
