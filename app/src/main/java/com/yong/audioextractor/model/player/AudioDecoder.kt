@@ -91,12 +91,13 @@ class AudioDecoder(
     private fun initDecoder(trackNum: Int) {
         // Track의 Format 확인
         val trackFormat = mediaExtractor.getTrackFormat(trackNum)
-
-        // video/avc MIME Type 지정
+        // MIME Type 지정
         mediaCodec = MediaCodec.createDecoderByType(trackFormat.getString(MediaFormat.KEY_MIME) ?: throw Exception("Unknown Audio Track Format"))
-        // 탐색한 Track을 지정과 렌더링할 Surface를 지정
-        // Crypto와 Flag는 지정하지 않음
+
+        // 탐색한 Track을 지정
+        // Surface와 Crypto, Flag는 지정하지 않음
         mediaCodec.configure(trackFormat, null, null, 0)
+        mediaCodec.start()
     }
 
     // MediaExtractor 초기화
@@ -127,8 +128,7 @@ class AudioDecoder(
 
     // Decoding 시작
     fun startDecoding() {
-        // Decoder 및 Track 시작
-        mediaCodec.start()
+        // Track 시작
         audioTrack?.play()
 
         // Decoder Coroutine 작업 생성
