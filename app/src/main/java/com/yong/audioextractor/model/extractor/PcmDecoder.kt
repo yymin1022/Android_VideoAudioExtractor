@@ -5,37 +5,54 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import java.nio.ByteBuffer
 
+/**
+ * PcmDecoder
+ * - Audio Track을 PCM 데이터로 Decode하기 위한 Model
+ */
 class PcmDecoder(
+    // Track 정보가 담긴 Extractor
     private val mediaExtractor: MediaExtractor
 ) {
+    // Decode 진행을 위한 MediaCodec
     private lateinit var mediaCodec: MediaCodec
+    // 각 Audio Sample의 Timestamp와 PCM Buffer를 담기 위한 자료구조
     private lateinit var resultBuffer: MutableList<Pair<Long, ByteBuffer>>
 
+    // PCM Decoding 진행
     fun decodePcm(): List<Pair<Long, ByteBuffer>> {
-        initDecoder(mediaExtractor.sampleTrackIndex)
+        // Decoder 초기화
+        initDecoder()
 
+        // Codec에 지정된 Buffer 정보 확인
         val bufferInfo = MediaCodec.BufferInfo()
         resultBuffer = mutableListOf()
 
         while(true) {
+            // Input Buffer 요청
             getInputBuffer()
 
+            // Decoding할 Output Buffer 읽기
             if(!processOutputBuffer(bufferInfo)) {
                 break
             }
         }
 
+        // Decoder 해제 및 종료
         mediaCodec.stop()
         mediaCodec.release()
 
+        // PCM  Decoding 결과를 데이터 반환
         return resultBuffer
     }
 
-    private fun initDecoder(trackNum: Int) {
-        val audioFormat = mediaExtractor.getTrackFormat(trackNum)
+    // Decoder 초기화
+    private fun initDecoder() {
+        // Track의 Format 확인 및 MIME Type 지정
+        val audioFormat = mediaExtractor.getTrackFormat(mediaExtractor.sampleTrackIndex)
         val audioMimeType = audioFormat.getString(MediaFormat.KEY_MIME) ?: throw Exception("Unknown audio type")
         mediaCodec = MediaCodec.createDecoderByType(audioMimeType)
 
+        // MediaCodec 초기화 및 시작
         mediaCodec.configure(audioFormat, null, null, 0)
         mediaCodec.start()
     }
@@ -68,7 +85,7 @@ class PcmDecoder(
         return true
     }
 
-    // 재생할 Output Buffer 읽기
+    // Decoding할 Output Buffer 읽기
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
         val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
         if(outputIdx >= 0) {
