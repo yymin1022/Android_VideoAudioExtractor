@@ -18,7 +18,7 @@ class M4aMuxer(
     // AAC 인코딩을 위한 MediaCodec
     private lateinit var mediaCodec: MediaCodec
     // 인코딩된 데이터를 기록할 MediaMuxer
-    private lateinit var muxer: MediaMuxer
+    private lateinit var mediaMuxer: MediaMuxer
     // muxer에 추가한 오디오 트랙의 인덱스
     private var trackIndex: Int = -1
     // muxer가 시작되었는지 확인하는 플래그
@@ -34,7 +34,7 @@ class M4aMuxer(
         // File Directory에 새 파일 생성
         val file = context.getFileStreamPath("result.m4a")
         // Muxer 초기화
-        muxer = MediaMuxer(file.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        mediaMuxer = MediaMuxer(file.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
         // Codec에 지정된 Buffer 정보 확인
         val bufferInfo = MediaCodec.BufferInfo()
@@ -114,9 +114,9 @@ class M4aMuxer(
             if(!muxerStarted) {
                 // Format 지정 후 Muxer에 추가
                 val newFormat = mediaCodec.outputFormat
-                trackIndex = muxer.addTrack(newFormat)
+                trackIndex = mediaMuxer.addTrack(newFormat)
                 // Muxer 시작
-                muxer.start()
+                mediaMuxer.start()
                 muxerStarted = true
             }
         } else if(outputBufferIndex >= 0) {
@@ -127,7 +127,7 @@ class M4aMuxer(
             if(bufferInfo.size > 0 && muxerStarted) {
                 outputBuffer.position(bufferInfo.offset)
                 outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
-                muxer.writeSampleData(trackIndex, outputBuffer, bufferInfo)
+                mediaMuxer.writeSampleData(trackIndex, outputBuffer, bufferInfo)
             }
 
             // 데이터가 끝난 Flag인 경우 종료
@@ -149,8 +149,8 @@ class M4aMuxer(
         mediaCodec.release()
         // Muxer 정지 및 해제
         if(muxerStarted) {
-            muxer.stop()
-            muxer.release()
+            mediaMuxer.stop()
+            mediaMuxer.release()
         }
     }
 }
