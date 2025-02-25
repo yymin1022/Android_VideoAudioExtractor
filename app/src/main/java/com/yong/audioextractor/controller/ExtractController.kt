@@ -11,6 +11,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * ExtractController
+ * - Audio 추출 기능을 구현한 Controller
+ * - Coroutine을 통해  Audio Extractor를 호출
+ * - 작업이 완료되면 이전 화면으로 돌아감
+ */
 class ExtractController: Controller() {
     // Audio Extractor Model 선언
     private val audioExtractor = AudioExtractor()
