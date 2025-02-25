@@ -13,6 +13,11 @@ class AudioExtractor {
     // Video 파일 분석을 위한 Media Extractor
     private lateinit var mediaExtractor: MediaExtractor
 
+    // 결과 파일 Muxing을 위한 Muxer
+    private lateinit var m4aMuxer: M4aMuxer
+    // Audio Track을 PCM 데이터로 Decodiong 하기 위한 Decoder
+    private lateinit var pcmDecoder: PcmDecoder
+
     // Audio를 Extract하기 위한 메소드
     fun extractAudio(context: Context, videoFd: AssetFileDescriptor) {
         // MediaExtractor 초기화
@@ -22,11 +27,11 @@ class AudioExtractor {
         val trackNum = getAudioTrack() ?: throw Exception("No Audio Track")
 
         // Audio Track을 PCM 데이터로 Decode 하기 위한 Decoder 초기화 및 호출
-        val pcmDecoder = PcmDecoder(mediaExtractor)
+        initPcmDecoder()
         val pcmData = pcmDecoder.decodePcm()
 
         // AAC로 Encode하고 파일로 생성하기 위한 Muxer 초기화 및 호출
-        val m4aMuxer = M4aMuxer(mediaExtractor.getTrackFormat(trackNum))
+        initM4aMuxer(trackNum)
         m4aMuxer.writeFile(context, pcmData)
         
         // Muxer 및 Extractor 해제
@@ -39,6 +44,14 @@ class AudioExtractor {
         mediaExtractor = MediaExtractor()
         // Video FD에서 파일을 읽어 Source로 지정
         mediaExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
+    }
+
+    private fun initM4aMuxer(trackNum: Int) {
+        m4aMuxer = M4aMuxer(mediaExtractor.getTrackFormat(trackNum))
+    }
+
+    private fun initPcmDecoder() {
+        pcmDecoder = PcmDecoder(mediaExtractor)
     }
 
     // MediaExtractor를 통해 Source 내에서 Audio Track 탐색
