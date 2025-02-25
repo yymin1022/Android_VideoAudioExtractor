@@ -40,9 +40,9 @@ class AudioDecoder(
         // Video FD에서 파일을 읽어 Source로 지정
         initExtractor(audioFd)
 
-        // MediaExtractor를 통해 Source 내에서 Video Track 탐색
+        // MediaExtractor를 통해 Source 내에서 Audio Track 탐색
         // Track이 Null인 경우 없는 것이므로 Exception 발생
-        val audioTrack = getAudioTrack() ?: throw Exception("No Video Track")
+        val audioTrack = getAudioTrack() ?: throw Exception("No Audio Track")
         // 탐색한 Track으로 MediaCodec Decoder 초기화
         initDecoder(audioTrack)
         // 탐색한 Track으로 Audio Track 초기화
