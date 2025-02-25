@@ -5,21 +5,32 @@ import android.content.res.AssetFileDescriptor
 import android.media.MediaExtractor
 import android.media.MediaFormat
 
+/**
+ * AudioExtractor
+ * - 파일의 Audio를 Decode하고 AAC로 Encode해 저장하기 위한 Model
+ */
 class AudioExtractor {
+    // Video 파일 분석을 위한 Media Extractor
     private lateinit var mediaExtractor: MediaExtractor
 
+    // Audio를 Extract하기 위한 메소드
     fun extractAudio(context: Context, videoFd: AssetFileDescriptor) {
+        // MediaExtractor 초기화
         initExtractor(videoFd)
 
+        // MediaExtractor를 통해 Source 내에서 Audio Track 탐색
         val trackNum = getAudioTrack() ?: throw Exception("No Audio Track")
 
+        // Audio Track을 PCM 데이터로 Decode 하기 위한 Decoder 초기화 및 호출
         val pcmDecoder = PcmDecoder(mediaExtractor)
         val pcmData = pcmDecoder.decodePcm()
 
+        // AAC로 Encode하고 파일로 생성하기 위한 Muxer 초기화 및 호출
         val m4aMuxer = M4aMuxer(mediaExtractor.getTrackFormat(trackNum))
         m4aMuxer.writeFile(context, pcmData)
+        
+        // Muxer 및 Extractor 해제
         m4aMuxer.close()
-
         mediaExtractor.release()
     }
 
