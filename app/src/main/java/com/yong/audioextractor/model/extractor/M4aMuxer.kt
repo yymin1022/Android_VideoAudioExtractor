@@ -5,6 +5,11 @@ import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.io.File
 import java.nio.ByteBuffer
 
 /**
@@ -21,36 +26,39 @@ class M4aMuxer(
     private lateinit var mediaMuxer: MediaMuxer
     // muxer에 추가한 오디오 트랙의 인덱스
     private var trackIndex: Int = -1
-    // muxer가 시작되었는지 확인하는 플래그
-    private var muxerStarted: Boolean = false
+
+    private var writeJob: Job? = null
 
     private var bufferInputIndex = 0
 
     // 전달받은 PCM 데이터를 AAC로 인코딩한 후, result.m4a 파일로 저장
-    fun writeFile(context: Context, pcmData: List<Pair<Long, ByteBuffer>>) {
+    fun writeFile(context: Context, pcmData: List<Pair<Long, ByteBuffer>>): Job? {
         // AAC 인코더 초기화
         initEncoder()
-        
-        // File Directory에 새 파일 생성
-        val file = context.getFileStreamPath("result.m4a")
+
         // Muxer 초기화
-        mediaMuxer = MediaMuxer(file.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        val file = context.getFileStreamPath("result.m4a")
+        initMuxer(file)
 
         // Codec에 지정된 Buffer 정보 확인
         val bufferInfo = MediaCodec.BufferInfo()
 
-        // PCM 데이터를 인코더를 통해 AAC 파일로 변환
-        while(true) {
-            // Input Buffer 요청
-            if(!getInputBuffer(pcmData)) {
-                // 더이상 읽을 Sample 데이터가 없는 경우
-                // 즉, 영상을 끝까지 재생한 경우에는 종료
-                break
-            }
+        writeJob?.cancel()
+        writeJob = CoroutineScope(Dispatchers.Default).launch {
+            // PCM 데이터를 인코더를 통해 AAC 파일로 변환
+            while(true) {
+                // Input Buffer 요청
+                if(!getInputBuffer(pcmData)) {
+                    // 더이상 읽을 Sample 데이터가 없는 경우 종료
+                    break
+                }
 
-            // Encoder에서 Output Buffer 처리
-            processOutputBuffer(bufferInfo)
+                // Output Buffer 처리
+                processOutputBuffer(bufferInfo)
+            }
         }
+
+        return writeJob
     }
 
     // Encoder 초기화
@@ -76,6 +84,16 @@ class M4aMuxer(
         mediaCodec.start()
     }
 
+    // Muxer 초기화
+    private fun initMuxer(file: File) {
+        // 새 파일 생성
+        mediaMuxer = MediaMuxer(file.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        // Muxer에 Track 추가
+        trackIndex = mediaMuxer.addTrack(mediaCodec.outputFormat)
+        // Muxer 시작
+        mediaMuxer.start()
+    }
+
     // Input Buffer 요청
     private fun getInputBuffer(pcmData: List<Pair<Long, ByteBuffer>>): Boolean {
         val inputIdx = mediaCodec.dequeueInputBuffer(0)
@@ -89,7 +107,7 @@ class M4aMuxer(
 
         // 현재 Index의 PCM SampleTime 및 Buffer 데이터
         val (sampleTime, buffer) = pcmData[bufferInputIndex]
-        // Buffer가 읽을 수 있는 상태인 경우
+        // Input Buffer가 유효한 경우
         if(inputIdx >= 0) {
             // Buffer의 앞에서부터 데이터 읽기
             buffer.position(0)
@@ -107,36 +125,28 @@ class M4aMuxer(
         return true
     }
 
+    // Output Buffer 처리
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
-        val outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
-        if(outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-            // 첫 호출 또는 출력 Format 변경 시 Format 지정 후 Muxer 시작
-            if(!muxerStarted) {
-                // Format 지정 후 Muxer에 추가
-                val newFormat = mediaCodec.outputFormat
-                trackIndex = mediaMuxer.addTrack(newFormat)
-                // Muxer 시작
-                mediaMuxer.start()
-                muxerStarted = true
-            }
-        } else if(outputBufferIndex >= 0) {
-            // 데이터가 유효한 경우 처리
-            val outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex)!!
+        val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
 
-            // 데이터가 유효하다면 Buffer Release(렌더링) 호출
-            if(bufferInfo.size > 0 && muxerStarted) {
+        // Output Buffer가 유효한 경우
+        if(outputIdx >= 0) {
+            val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)!!
+
+            // Output Buffer가 유효한 경우
+            if(bufferInfo.size > 0) {
                 outputBuffer.position(bufferInfo.offset)
                 outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
                 mediaMuxer.writeSampleData(trackIndex, outputBuffer, bufferInfo)
             }
 
-            // 데이터가 끝난 Flag인 경우 종료
-            if(bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                return false
-            }
+            // 처리한 Buffer 비우기
+            mediaCodec.releaseOutputBuffer(outputIdx, false)
+        }
 
-            // Buffer Release 호출
-            mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
+        // End Of Stream Flag인 경우 종료
+        if(bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+            return false
         }
 
         return true
@@ -148,9 +158,7 @@ class M4aMuxer(
         mediaCodec.stop()
         mediaCodec.release()
         // Muxer 정지 및 해제
-        if(muxerStarted) {
-            mediaMuxer.stop()
-            mediaMuxer.release()
-        }
+        mediaMuxer.stop()
+        mediaMuxer.release()
     }
 }

@@ -5,11 +5,7 @@ import android.content.res.AssetFileDescriptor
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import com.yong.audioextractor.model.AudioDecoder
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 
@@ -18,11 +14,11 @@ import java.nio.ByteBuffer
  * - 파일의 Audio를 Decode하고 AAC로 Encode해 저장하기 위한 Model
  */
 class AudioExtractor {
-    // 결과 파일 Muxing을 위한 Muxer
-    private lateinit var m4aMuxer: M4aMuxer
     // Audio의 Decoding을 위한 Decoder 및 Extractor
     private lateinit var audioDecoder: AudioDecoder
     private lateinit var audioExtractor: MediaExtractor
+    // 결과 파일 Muxing을 위한 Muxer
+    private lateinit var m4aMuxer: M4aMuxer
 
     // 각 Audio Sample의 Timestamp와 PCM Buffer를 담기 위한 자료구조
     private var pcmBuffer: MutableList<Pair<Long, ByteBuffer>> = mutableListOf()
@@ -35,22 +31,26 @@ class AudioExtractor {
         // MediaExtractor를 통해 Source 내에서 Audio Track 탐색
         val trackNum = getAudioTrackNum() ?: throw Exception("No Audio Track")
 
-        // Audio Track을 PCM 데이터로 Decode 하기 위한 Decoder 초기화 및 호출
+        // Decoder (Audio -> PCM) 초기화
         initDecoder(trackNum)
+        // Muxer (PCM -> File) 초기화
+        initM4aMuxer(trackNum)
 
         withContext(Dispatchers.Default) {
-            val job = audioDecoder.startDecoding()
-            job?.join()
+            // Audio Decoder 호출
+            val decodeJob = audioDecoder.startDecoding()
+            // Decoding 작업이 끝날 때 까지 대기
+            decodeJob?.join()
 
-            // AAC로 Encode하고 파일로 생성하기 위한 Muxer 초기화 및 호출
-            initM4aMuxer(trackNum)
-            m4aMuxer.writeFile(context, pcmBuffer)
+            // AAC로 Encode하고 파일로 생성하기 위한 Muxer 호출
+            val writeJob = m4aMuxer.writeFile(context, pcmBuffer)
+            // Write 작업이 끝날 때 까지 대기
+            writeJob?.join()
 
             // Muxer 및 Extractor 해제
             m4aMuxer.close()
             audioExtractor.release()
         }
-
     }
 
     private fun initDecoder(trackNum: Int) {
