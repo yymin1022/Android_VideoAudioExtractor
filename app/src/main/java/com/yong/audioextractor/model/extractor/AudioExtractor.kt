@@ -4,19 +4,22 @@ import android.content.Context
 import android.content.res.AssetFileDescriptor
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import com.yong.audioextractor.model.AudioDecoder
+import java.nio.ByteBuffer
 
 /**
  * AudioExtractor
  * - 파일의 Audio를 Decode하고 AAC로 Encode해 저장하기 위한 Model
  */
 class AudioExtractor {
-    // Video 파일 분석을 위한 Media Extractor
-    private lateinit var mediaExtractor: MediaExtractor
-
     // 결과 파일 Muxing을 위한 Muxer
     private lateinit var m4aMuxer: M4aMuxer
-    // Audio Track을 PCM 데이터로 Decodiong 하기 위한 Decoder
-    private lateinit var pcmDecoder: PcmDecoder
+    // Audio의 Decoding을 위한 Decoder 및 Extractor
+    private lateinit var audioDecoder: AudioDecoder
+    private lateinit var audioExtractor: MediaExtractor
+
+    // 각 Audio Sample의 Timestamp와 PCM Buffer를 담기 위한 자료구조
+    private var pcmBuffer: MutableList<Pair<Long, ByteBuffer>> = mutableListOf()
 
     // Audio를 Extract하기 위한 메소드
     fun extractAudio(context: Context, videoFd: AssetFileDescriptor) {
@@ -24,52 +27,59 @@ class AudioExtractor {
         initExtractor(videoFd)
 
         // MediaExtractor를 통해 Source 내에서 Audio Track 탐색
-        val trackNum = getAudioTrack() ?: throw Exception("No Audio Track")
+        val trackNum = getAudioTrackNum() ?: throw Exception("No Audio Track")
 
         // Audio Track을 PCM 데이터로 Decode 하기 위한 Decoder 초기화 및 호출
-        initPcmDecoder()
-        val pcmData = pcmDecoder.decodePcm()
+        initDecoder(trackNum)
+        audioDecoder.startDecoding()
 
         // AAC로 Encode하고 파일로 생성하기 위한 Muxer 초기화 및 호출
         initM4aMuxer(trackNum)
-        m4aMuxer.writeFile(context, pcmData)
-        
+        m4aMuxer.writeFile(context, pcmBuffer)
+
         // Muxer 및 Extractor 해제
         m4aMuxer.close()
-        mediaExtractor.release()
+        audioExtractor.release()
+    }
+
+    private fun initDecoder(trackNum: Int) {
+        // Audio Decoder 초기화
+        audioDecoder = AudioDecoder(trackNum, audioExtractor, ::getAudioPcmBuffer)
     }
 
     // MediaExtractor 초기화
     private fun initExtractor(videoFd: AssetFileDescriptor) {
-        mediaExtractor = MediaExtractor()
+        audioExtractor = MediaExtractor()
         // Video FD에서 파일을 읽어 Source로 지정
-        mediaExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
+        audioExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
     }
 
     private fun initM4aMuxer(trackNum: Int) {
-        m4aMuxer = M4aMuxer(mediaExtractor.getTrackFormat(trackNum))
+        m4aMuxer = M4aMuxer(audioExtractor.getTrackFormat(trackNum))
     }
 
-    private fun initPcmDecoder() {
-        pcmDecoder = PcmDecoder(mediaExtractor)
-    }
-
-    // MediaExtractor를 통해 Source 내에서 Audio Track 탐색
-    private fun getAudioTrack(): Int? {
-        // MediaExtractor 내 모든 Track을 탐색
-        for(i in 0 until mediaExtractor.trackCount) {
-            val trackFormat = mediaExtractor.getTrackFormat(i)
+    // Source Video 내에서 Audio Track 탐색
+    private fun getAudioTrackNum(): Int? {
+        // 모든 Track 탐색
+        for(i in 0 until audioExtractor.trackCount) {
+            val trackFormat = audioExtractor.getTrackFormat(i)
             // Type을 알 수 없는 Track인 경우 건너뛰기
             val trackType = trackFormat.getString(MediaFormat.KEY_MIME) ?: continue
 
             // Audio MIME Type을 갖는 Track 지정
             if(trackType.startsWith("audio/")) {
-                mediaExtractor.selectTrack(i)
+                audioExtractor.selectTrack(i)
                 return i
             }
         }
 
         // 정해진 Track을 찾지 못한 경우 Null 반환
         return null
+    }
+
+    // Decoding된 Audio Buffer 재생
+    private fun getAudioPcmBuffer(sampleTime: Long, buffer: ByteArray) {
+        // Result Buffer에 데이터 추가
+        pcmBuffer.add(Pair(sampleTime, ByteBuffer.wrap(buffer)))
     }
 }

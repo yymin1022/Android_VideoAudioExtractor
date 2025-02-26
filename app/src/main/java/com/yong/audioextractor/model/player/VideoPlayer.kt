@@ -194,7 +194,7 @@ class VideoPlayer {
     }
 
     // Decoding된 Audio Buffer 재생
-    private fun playAudioBuffer(buffer: ByteArray) {
+    private fun playAudioBuffer(sampleTime: Long, buffer: ByteArray) {
         // Audio Track에 Buffer 추가
         audioTrack.write(buffer, 0, buffer.size)
     }

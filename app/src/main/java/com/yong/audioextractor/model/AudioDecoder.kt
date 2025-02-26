@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
 class AudioDecoder(
     trackNum: Int,
     private val mediaExtractor: MediaExtractor,
-    private val processBuffer: (ByteArray) -> Unit,
+    private val processBuffer: (Long, ByteArray) -> Unit,
     // 재생 및 일시정지 상태를 확인하기 위한 Field 함수
     private val isPaused: () -> Boolean = { false },
     private val isPlaying: () -> Boolean = { true },
@@ -127,7 +126,7 @@ class AudioDecoder(
             outputBuffer?.clear()
 
             // Buffer 처리 함수 호출
-            processBuffer(chunk)
+            processBuffer(mediaExtractor.sampleTime, chunk)
             // 처리한 Buffer 비우기
             mediaCodec.releaseOutputBuffer(outputIdx, false)
         }
