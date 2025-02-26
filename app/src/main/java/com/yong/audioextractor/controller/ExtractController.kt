@@ -31,7 +31,9 @@ class ExtractController: Controller() {
         val videoFd = resources?.openRawResourceFd(R.raw.sample_video) ?: throw Exception("No video available")
 
         CoroutineScope(Dispatchers.Main).launch {
+            // Extractor 호출
             audioExtractor.extractAudio(activity!!.applicationContext, videoFd)
+            // Extractor 종료 시 이전 화면으로 Pop
             router.popCurrentController()
         }
 
