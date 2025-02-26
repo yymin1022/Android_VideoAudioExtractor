@@ -77,7 +77,9 @@ class PlayController: Controller() {
     private val textureViewListener = object: TextureView.SurfaceTextureListener {
         // Video의 진행 상황 업데이트
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
-            progressPlay.progress = videoPlayer.getVideoPlayRate().toInt()
+            if(videoPlayer.isVideoPlaying()) {
+                progressPlay.progress = videoPlayer.getVideoPlayRate().toInt()
+            }
         }
 
         // 구현하지 않는 메소드
