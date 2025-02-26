@@ -73,7 +73,7 @@ class VideoPlayer {
         val audioTrack = getAudioTrackNum() ?: throw Exception("No Audio Track")
         initAudioTrack(audioTrack)
 
-        audioDecoder = AudioDecoder(audioTrack, audioExtractor, ::playAudioBuffer, ::isPaused, ::isPlaying)
+        audioDecoder = AudioDecoder(audioTrack, audioExtractor, ::playAudioBuffer, ::isPaused, ::isPlaying, true, ::getVideoSampleTime)
     }
 
     // Audio MediaExtractor 초기화

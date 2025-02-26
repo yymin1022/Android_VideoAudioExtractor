@@ -20,7 +20,9 @@ class AudioDecoder(
     private val mediaExtractor: MediaExtractor,
     private val processBuffer: (ByteArray) -> Unit,
     private val isPaused: () -> Boolean = { false },
-    private val isPlaying: () -> Boolean = { true }
+    private val isPlaying: () -> Boolean = { true },
+    private val isSyncNeeded: Boolean = false,
+    private val getSyncTime: () -> Long = { 0 }
 ) {
     // Decoding을 위한 MediaCodec
     private val mediaCodec: MediaCodec
@@ -57,6 +59,8 @@ class AudioDecoder(
                 if(!isInputEOS && !getInputBuffer()) {
                     isInputEOS = true
                 }
+
+                if(isSyncNeeded) syncTimestamp()
 
                 // Output Buffer 처리
                 if(!processOutputBuffer(bufferInfo)) {
@@ -128,5 +132,24 @@ class AudioDecoder(
         }
 
         return true
+    }
+
+    // Video와의 Time Sync 확인
+    private suspend fun syncTimestamp() {
+        while(isPlaying()) {
+            // Audio 및 Video 각각의 Sample Time 확인
+            val audioSampleTime = mediaExtractor.sampleTime
+            val videoSampleTime = getSyncTime()
+
+            // Sample Time이 올바르지 않은 경우 종료
+            if(audioSampleTime <= 0 || videoSampleTime <= 0) break
+
+            // Audio가 10ms 이상 앞서는 경우 Delay
+            if(audioSampleTime > videoSampleTime + 10000) delay(5)
+            // Video가 10ms 이상 앞서는 경우 Audio Advance 호출
+            else if(audioSampleTime < videoSampleTime - 10000) mediaExtractor.advance()
+            // Sync가 10ms 이하로 맞는 경우 종료
+            else break
+        }
     }
 }
