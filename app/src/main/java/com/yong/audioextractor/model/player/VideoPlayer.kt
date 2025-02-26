@@ -23,10 +23,11 @@ class VideoPlayer {
     fun isVideoPaused() = isPaused
     fun isVideoPlaying() = isPlaying
 
-    // Video의 Decoding을 위한 Decoder
+    // Video의 Decoding을 위한 Decoder 및 Extractor
     private lateinit var videoDecoder: VideoDecoder
     private lateinit var videoExtractor: MediaExtractor
 
+    // Audio의 Decoding을 위한 Decoder 및 Extractor, Track
     private lateinit var audioDecoder: AudioDecoder
     private lateinit var audioExtractor: MediaExtractor
     private lateinit var audioTrack: AudioTrack
