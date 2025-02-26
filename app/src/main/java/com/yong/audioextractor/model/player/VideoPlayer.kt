@@ -20,7 +20,9 @@ class VideoPlayer {
     fun isVideoPaused() = isPaused
     fun isVideoPlaying() = isPlaying
 
-    private val videoDecoder = VideoDecoder(::isVideoPaused, ::isVideoPlaying, ::stopVideoPlay)
+    // Video의 Decoding을 위한 Decoder
+    private lateinit var videoDecoder: VideoDecoder
+    private lateinit var videoExtractor: MediaExtractor
 
     private lateinit var audioDecoder: AudioDecoder
     private lateinit var audioExtractor: MediaExtractor
@@ -32,9 +34,7 @@ class VideoPlayer {
 
         // Audio Play를 위한 초기화
         initAudio(videoFd)
-
-        // Audio/Video Decoder 초기화
-        videoDecoder.init(videoFd, surface)
+        initVideo(videoFd, surface)
 
         // Audio/Video Decoder 시작
         audioDecoder.startDecoding()
@@ -66,8 +66,9 @@ class VideoPlayer {
         audioTrack.stop()
         audioTrack.release()
 
-        // Audio Extractor 해제
+        // Audio/Video Extractor 해제
         audioExtractor.release()
+        videoExtractor.release()
     }
 
     // Audio Play를 위한 초기화
@@ -83,11 +84,30 @@ class VideoPlayer {
         audioDecoder = AudioDecoder(audioTrack, audioExtractor, ::playAudioBuffer, ::isPaused, ::isPlaying, true, ::getVideoSampleTime)
     }
 
+    // Video Play를 위한 초기화
+    private fun initVideo(videoFd: AssetFileDescriptor, surface: Surface) {
+        // Video MediaExtractor 초기화
+        initVideoExtractor(videoFd)
+
+        // Audio가 담긴 Track 확인
+        val videoTrack = getVideoTrackNum() ?: throw Exception("No Video Track")
+
+        // Video Decoder 초기화
+        videoDecoder = VideoDecoder(surface, videoTrack, videoExtractor, ::isPaused, ::isPlaying, ::stopVideoPlay)
+    }
+
     // Audio MediaExtractor 초기화
     private fun initAudioExtractor(videoFd: AssetFileDescriptor) {
         audioExtractor = MediaExtractor()
         // Video FD에서 파일을 읽어 Source로 지정
         audioExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
+    }
+
+    // Video MediaExtractor 초기화
+    private fun initVideoExtractor(videoFd: AssetFileDescriptor) {
+        videoExtractor = MediaExtractor()
+        // Video FD에서 파일을 읽어 Source로 지정
+        videoExtractor.setDataSource(videoFd.fileDescriptor, videoFd.startOffset, videoFd.length)
     }
 
     // AudioTrack 초기화
@@ -140,6 +160,25 @@ class VideoPlayer {
             // Audio MIME Type을 갖는 Track 지정
             if(trackType.startsWith("audio/")) {
                 audioExtractor.selectTrack(i)
+                return i
+            }
+        }
+
+        // 정해진 Track을 찾지 못한 경우 Null 반환
+        return null
+    }
+
+    // Source Video 내에서 Video Track 탐색
+    private fun getVideoTrackNum(): Int? {
+        // 모든 Track 탐색
+        for(i in 0 until videoExtractor.trackCount) {
+            val trackFormat = videoExtractor.getTrackFormat(i)
+            // Type을 알 수 없는 Track인 경우 건너뛰기
+            val trackType = trackFormat.getString(MediaFormat.KEY_MIME) ?: continue
+
+            // video/avc MIME Type을 갖는 Track 지정
+            if(trackType == MediaFormat.MIMETYPE_VIDEO_AVC) {
+                videoExtractor.selectTrack(i)
                 return i
             }
         }
