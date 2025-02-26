@@ -45,7 +45,32 @@ class AudioDecoder(
         }
     }
 
+    // Input Buffer 요청
     private fun getInputBuffer(): Boolean {
+        val inputIdx = mediaCodec.dequeueInputBuffer(0)
+        
+        // Input Buffer가 유효한 경우
+        if(inputIdx >= 0) {
+            val inputBuffer = mediaCodec.getInputBuffer(inputIdx)
+            // Buffer에 Sample 데이터 전달
+            val sampleSize = mediaExtractor.readSampleData(inputBuffer!!, 0)
+
+            // 더이상 읽을 Sample 데이터가 없는 경우
+            // 즉, 영상을 끝까지 재생한 경우
+            if(sampleSize < 0) {
+                // End Of Stream Flag 전달 후 종료
+                mediaCodec.queueInputBuffer(inputIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                return false
+            }
+
+            // 현재 읽은 데이터의 타임스탬프 확인
+            val sampleTime = mediaExtractor.sampleTime
+
+            // Decoder에 읽어들인 데이터 추가
+            mediaCodec.queueInputBuffer(inputIdx, 0, sampleSize, sampleTime, 0)
+            mediaExtractor.advance()
+        }
+
         return true
     }
 
