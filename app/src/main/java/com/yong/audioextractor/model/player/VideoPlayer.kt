@@ -55,13 +55,13 @@ class VideoPlayer {
     fun stopVideoPlay() {
         isPlaying = false
 
-        // Audio Track 종료
-        audioTrack.stop()
-        audioTrack.release()
-
         // Audio/Video Decoder 작업 종료
         audioDecoder.stopDecoding()
         videoDecoder.stopDecoding()
+
+        // Audio Track 종료
+        audioTrack.stop()
+        audioTrack.release()
 
         // Audio Extractor 해제
         audioExtractor.release()
