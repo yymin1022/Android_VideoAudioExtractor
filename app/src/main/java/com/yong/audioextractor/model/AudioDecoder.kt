@@ -19,9 +19,12 @@ class AudioDecoder(
     trackNum: Int,
     private val mediaExtractor: MediaExtractor,
     private val processBuffer: (ByteArray) -> Unit,
+    // 재생 및 일시정지 상태를 확인하기 위한 Field 함수
     private val isPaused: () -> Boolean = { false },
     private val isPlaying: () -> Boolean = { true },
-    private val isSyncNeeded: Boolean = false,
+    // Time Sync 여부를 확인하기 위한 Field
+    private val isTimeSyncNeeded: Boolean = false,
+    // Sync하기 위한 시간을 받아오기 위한 Field 함수
     private val getSyncTime: () -> Long = { 0 }
 ) {
     // Decoding을 위한 MediaCodec
@@ -50,6 +53,7 @@ class AudioDecoder(
             val bufferInfo = MediaCodec.BufferInfo()
             // 재생 중이며, Output에 EOS가 발생할 때 까지 반복
             while(isPlaying() && !isOutputEOS) {
+                // Pause 상태인 경우 Decode 하지 않고 대기
                 if(isPaused()) {
                     delay(100)
                     continue
@@ -60,7 +64,7 @@ class AudioDecoder(
                     isInputEOS = true
                 }
 
-                if(isSyncNeeded) syncTimestamp()
+                if(isTimeSyncNeeded) syncTimestamp()
 
                 // Output Buffer 처리
                 if(!processOutputBuffer(bufferInfo)) {
@@ -82,11 +86,11 @@ class AudioDecoder(
     // Input Buffer 요청
     private fun getInputBuffer(): Boolean {
         val inputIdx = mediaCodec.dequeueInputBuffer(0)
-        
+
         // Input Buffer가 유효한 경우
         if(inputIdx >= 0) {
             val inputBuffer = mediaCodec.getInputBuffer(inputIdx)
-            // Buffer에 Sample 데이터 전달
+            // Buffer에서 Sample 데이터 읽기
             val sampleSize = mediaExtractor.readSampleData(inputBuffer!!, 0)
 
             // 더이상 읽을 Sample 데이터가 없는 경우
@@ -112,26 +116,22 @@ class AudioDecoder(
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
         val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
 
-        // Output Buffer가 유효한 경우
-        if(outputIdx >= 0) {
+        // 재생중이고 Output Buffer가 유효한 경우
+        if(isPlaying() && outputIdx >= 0) {
             val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)
             val chunk = ByteArray(bufferInfo.size)
             outputBuffer?.get(chunk)
             outputBuffer?.clear()
 
+            // Buffer 처리 함수 호출
+            processBuffer(chunk)
+            // 처리한 Buffer 비우기
+            mediaCodec.releaseOutputBuffer(outputIdx, false)
+        }
 
-            // 재생중인 경우
-            if(isPlaying()) {
-                // Buffer 처리 함수 호출
-                processBuffer(chunk)
-                // 처리한 Buffer 비우기
-                mediaCodec.releaseOutputBuffer(outputIdx, false)
-            }
-
-            // End Of Stream Flag인 경우 종료
-            if(bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                return false
-            }
+        // End Of Stream Flag인 경우 종료
+        if(bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+            return false
         }
 
         return true
