@@ -3,6 +3,7 @@ package com.yong.audioextractor.model
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import java.nio.ByteBuffer
 
 /**
  * AudioDecoder
@@ -13,7 +14,7 @@ import android.media.MediaFormat
 class AudioDecoder(
     private val mediaExtractor: MediaExtractor,
     private val trackNum: Int,
-    private val processBuffer: () -> Unit
+    private val processBuffer: (ByteBuffer) -> Unit
 ) {
     // Decoding을 위한 MediaCodec
     private val mediaCodec: MediaCodec
@@ -74,7 +75,29 @@ class AudioDecoder(
         return true
     }
 
+    // Output Buffer 처리
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
+        val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
+
+        // Output Buffer가 유효한 경우
+        if(outputIdx >= 0) {
+            val outputBuffer = mediaCodec.getOutputBuffer(outputIdx)
+            val chunk = ByteArray(bufferInfo.size)
+            outputBuffer?.get(chunk)
+            outputBuffer?.clear()
+
+            // Buffer 처리 함수 호출
+            processBuffer(ByteBuffer.wrap(chunk))
+
+            // 처리한 Buffer 비우기
+            mediaCodec.releaseOutputBuffer(outputIdx, false)
+
+            // End Of Stream Flag인 경우 종료
+            if(bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                return false
+            }
+        }
+
         return true
     }
 }
