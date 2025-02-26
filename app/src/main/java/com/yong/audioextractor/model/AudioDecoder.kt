@@ -53,7 +53,7 @@ class AudioDecoder(
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             val bufferInfo = MediaCodec.BufferInfo()
             // 재생 중이며, Output에 EOS가 발생할 때 까지 반복
-            while(isActive && isPlaying() && !isOutputEOS) {
+            while(isPlaying() && !isOutputEOS) {
                 // Pause 상태인 경우 Decode 하지 않고 대기
                 if(isPaused()) {
                     delay(100)
@@ -71,14 +71,15 @@ class AudioDecoder(
                 // Output Buffer 처리
                 if(!processOutputBuffer(bufferInfo)) {
                     isOutputEOS = true
+                    break
                 }
             }
         }
     }
 
-    fun stopDecoding() {
+    suspend fun stopDecoding() {
         // Decoding 작업 종료
-        decodeJob?.cancel()
+        decodeJob?.join()
 
         // Media Codec 정지 및 해제
         mediaCodec.stop()

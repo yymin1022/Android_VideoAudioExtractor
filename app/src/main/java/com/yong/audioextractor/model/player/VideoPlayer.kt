@@ -8,6 +8,9 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.view.Surface
 import com.yong.audioextractor.model.AudioDecoder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * VideoPlayer
@@ -58,17 +61,19 @@ class VideoPlayer {
     fun stopVideoPlay() {
         isPlaying = false
 
-        // Audio/Video Decoder 작업 종료
-        audioDecoder.stopDecoding()
-        videoDecoder.stopDecoding()
+        CoroutineScope(Dispatchers.Default).launch {
+            // Audio/Video Decoder 작업 종료
+            audioDecoder.stopDecoding()
+            videoDecoder.stopDecoding()
 
-        // Audio Track 종료
-        audioTrack.stop()
-        audioTrack.release()
+            // Audio Track 종료
+            audioTrack.stop()
+            audioTrack.release()
 
-        // Audio/Video Extractor 해제
-        audioExtractor.release()
-        videoExtractor.release()
+            // Audio/Video Extractor 해제
+            audioExtractor.release()
+            videoExtractor.release()
+        }
     }
 
     // Audio Play를 위한 초기화
