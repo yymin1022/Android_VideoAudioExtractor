@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -61,7 +62,7 @@ class VideoDecoder(
 
             val bufferInfo = MediaCodec.BufferInfo()
             // 재생 중이며, Output에 EOS가 발생할 때 까지 반복
-            while(isPlaying() && !isOutputEOS) {
+            while(isActive && isPlaying() && !isOutputEOS) {
                 // Pause 상태인 경우 Decode 하지 않고 대기
                 if(isPaused()) {
                     delay(100)
@@ -131,8 +132,8 @@ class VideoDecoder(
     private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
         val outputIdx = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
 
-        // 재생중이고 Output Buffer가 유효한 경우
-        if(isPlaying() && outputIdx >= 0) {
+        // Output Buffer가 유효한 경우
+        if(outputIdx >= 0) {
             // 처리한 Buffer 비우기
             mediaCodec.releaseOutputBuffer(outputIdx, true)
         }
