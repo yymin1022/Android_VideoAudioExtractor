@@ -44,7 +44,7 @@ class AudioDecoder(
         mediaCodec.start()
     }
 
-    fun startDecoding() {
+    fun startDecoding(): Job? {
         var isInputEOS = false
         var isOutputEOS = false
 
@@ -74,6 +74,8 @@ class AudioDecoder(
                 }
             }
         }
+
+        return decodeJob
     }
 
     suspend fun stopDecoding() {

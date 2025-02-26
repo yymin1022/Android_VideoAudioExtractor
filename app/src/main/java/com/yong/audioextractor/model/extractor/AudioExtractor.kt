@@ -5,6 +5,12 @@ import android.content.res.AssetFileDescriptor
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import com.yong.audioextractor.model.AudioDecoder
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 
 /**
@@ -22,7 +28,7 @@ class AudioExtractor {
     private var pcmBuffer: MutableList<Pair<Long, ByteBuffer>> = mutableListOf()
 
     // Audio를 Extract하기 위한 메소드
-    fun extractAudio(context: Context, videoFd: AssetFileDescriptor) {
+    suspend fun extractAudio(context: Context, videoFd: AssetFileDescriptor) {
         // MediaExtractor 초기화
         initExtractor(videoFd)
 
@@ -31,15 +37,20 @@ class AudioExtractor {
 
         // Audio Track을 PCM 데이터로 Decode 하기 위한 Decoder 초기화 및 호출
         initDecoder(trackNum)
-        audioDecoder.startDecoding()
 
-        // AAC로 Encode하고 파일로 생성하기 위한 Muxer 초기화 및 호출
-        initM4aMuxer(trackNum)
-        m4aMuxer.writeFile(context, pcmBuffer)
+        withContext(Dispatchers.Default) {
+            val job = audioDecoder.startDecoding()
+            job?.join()
 
-        // Muxer 및 Extractor 해제
-        m4aMuxer.close()
-        audioExtractor.release()
+            // AAC로 Encode하고 파일로 생성하기 위한 Muxer 초기화 및 호출
+            initM4aMuxer(trackNum)
+            m4aMuxer.writeFile(context, pcmBuffer)
+
+            // Muxer 및 Extractor 해제
+            m4aMuxer.close()
+            audioExtractor.release()
+        }
+
     }
 
     private fun initDecoder(trackNum: Int) {
