@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
 
 /**
  * AudioDecoder
@@ -44,11 +43,14 @@ class AudioDecoder(
         decodeJob?.cancel()
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             val bufferInfo = MediaCodec.BufferInfo()
+            // Output에 EOS가 발생할 때 까지 반복
             while(!isOutputEOS) {
+                // Input에 EOS가 발생하지 않았다면 Input Buffer 요청
                 if(!isInputEOS && !getInputBuffer()) {
                     isInputEOS = true
                 }
 
+                // Output Buffer 처리
                 if(!processOutputBuffer(bufferInfo)) {
                     isOutputEOS = true
                 }
@@ -57,8 +59,10 @@ class AudioDecoder(
     }
 
     fun stopDecoding() {
+        // Decoding 작업 종료
         decodeJob?.cancel()
 
+        // Media Codec 정지 및 해제
         mediaCodec.stop()
         mediaCodec.release()
     }
