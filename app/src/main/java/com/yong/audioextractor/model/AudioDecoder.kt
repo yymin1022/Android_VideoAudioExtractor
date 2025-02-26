@@ -1,7 +1,6 @@
 package com.yong.audioextractor.model
 
 import android.media.MediaCodec
-import android.media.MediaCodec.BufferInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 
@@ -40,7 +39,7 @@ class AudioDecoder(
                 isInputEOS = true
             }
 
-            if(processOutputBuffer(bufferInfo)) {
+            if(!processOutputBuffer(bufferInfo)) {
                 isOutputEOS = true
             }
         }
@@ -50,7 +49,7 @@ class AudioDecoder(
         return true
     }
 
-    private fun processOutputBuffer(bufferInfo: BufferInfo): Boolean {
+    private fun processOutputBuffer(bufferInfo: MediaCodec.BufferInfo): Boolean {
         return true
     }
 }
