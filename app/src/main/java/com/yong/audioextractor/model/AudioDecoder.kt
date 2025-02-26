@@ -6,6 +6,7 @@ import android.media.MediaFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -17,7 +18,9 @@ import kotlinx.coroutines.launch
 class AudioDecoder(
     trackNum: Int,
     private val mediaExtractor: MediaExtractor,
-    private val processBuffer: (ByteArray) -> Unit
+    private val processBuffer: (ByteArray) -> Unit,
+    private val isPaused: () -> Boolean = { false },
+    private val isPlaying: () -> Boolean = { true }
 ) {
     // Decoding을 위한 MediaCodec
     private val mediaCodec: MediaCodec
@@ -43,8 +46,13 @@ class AudioDecoder(
         decodeJob?.cancel()
         decodeJob = CoroutineScope(Dispatchers.Default).launch {
             val bufferInfo = MediaCodec.BufferInfo()
-            // Output에 EOS가 발생할 때 까지 반복
-            while(!isOutputEOS) {
+            // 재생 중이며, Output에 EOS가 발생할 때 까지 반복
+            while(isPlaying() && !isOutputEOS) {
+                if(isPaused()) {
+                    delay(100)
+                    continue
+                }
+
                 // Input에 EOS가 발생하지 않았다면 Input Buffer 요청
                 if(!isInputEOS && !getInputBuffer()) {
                     isInputEOS = true
