@@ -30,7 +30,7 @@ class VideoPlayer {
     fun startVideoPlay(videoFd: AssetFileDescriptor, surface: Surface) {
         isPlaying = true
 
-        // Audio Play 초기화
+        // Audio Play를 위한 초기화
         initAudio(videoFd)
 
         // Audio/Video Decoder 초기화
@@ -39,6 +39,9 @@ class VideoPlayer {
         // Audio/Video Decoder 시작
         audioDecoder.startDecoding()
         videoDecoder.startDecoding()
+
+        // Audio Track 재생 시작
+        audioTrack.play()
     }
 
     // 일시 정지된 Video Play 계속 진행
@@ -67,12 +70,16 @@ class VideoPlayer {
         audioExtractor.release()
     }
 
+    // Audio Play를 위한 초기화
     private fun initAudio(videoFd: AssetFileDescriptor) {
+        // Audio MediaExtractor 초기화
         initAudioExtractor(videoFd)
 
+        // Audio가 담긴 Track 확인
         val audioTrack = getAudioTrackNum() ?: throw Exception("No Audio Track")
         initAudioTrack(audioTrack)
 
+        // Audio Decoder 초기화
         audioDecoder = AudioDecoder(audioTrack, audioExtractor, ::playAudioBuffer, ::isPaused, ::isPlaying, true, ::getVideoSampleTime)
     }
 
@@ -104,8 +111,8 @@ class VideoPlayer {
                 AudioAttributes.Builder()
                     // 일반 Media로 지정
                     .setUsage(AudioAttributes.USAGE_MEDIA)
-                    // Music Type 지정
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    // Movie Type 지정
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
                     .build()
             )
             .setAudioFormat(
@@ -117,6 +124,7 @@ class VideoPlayer {
                     .build()
             )
             .setBufferSizeInBytes(minBufferSize)
+            // Stream을 통해 Buffer가 제공됨
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
     }
@@ -140,7 +148,9 @@ class VideoPlayer {
         return null
     }
 
+    // Decoding된 Audio Buffer 재생
     private fun playAudioBuffer(buffer: ByteArray) {
+        // Audio Track에 Buffer 추가
         audioTrack.write(buffer, 0, buffer.size)
     }
 
