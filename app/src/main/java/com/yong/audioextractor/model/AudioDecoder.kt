@@ -3,6 +3,10 @@ package com.yong.audioextractor.model
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 
 /**
@@ -12,14 +16,17 @@ import java.nio.ByteBuffer
  * - Decoding을 진행한 Output으로 Callback 함수를 호출하는 Model
  */
 class AudioDecoder(
+    trackNum: Int,
     private val mediaExtractor: MediaExtractor,
-    private val trackNum: Int,
-    private val processBuffer: (ByteBuffer) -> Unit
+    private val processBuffer: (ByteArray) -> Unit
 ) {
     // Decoding을 위한 MediaCodec
     private val mediaCodec: MediaCodec
     // Decoding 할 Track의 Format
     private val trackFormat: MediaFormat = mediaExtractor.getTrackFormat(trackNum)
+
+    // Decoding을 위한 Coroutine Job
+    private var decodeJob: Job? = null
 
     init {
         // MediaCodec 초기화
@@ -34,16 +41,23 @@ class AudioDecoder(
         var isInputEOS = false
         var isOutputEOS = false
 
-        val bufferInfo = MediaCodec.BufferInfo()
-        while(!isOutputEOS) {
-            if(!isInputEOS && !getInputBuffer()) {
-                isInputEOS = true
-            }
+        decodeJob?.cancel()
+        decodeJob = CoroutineScope(Dispatchers.Default).launch {
+            val bufferInfo = MediaCodec.BufferInfo()
+            while(!isOutputEOS) {
+                if(!isInputEOS && !getInputBuffer()) {
+                    isInputEOS = true
+                }
 
-            if(!processOutputBuffer(bufferInfo)) {
-                isOutputEOS = true
+                if(!processOutputBuffer(bufferInfo)) {
+                    isOutputEOS = true
+                }
             }
         }
+    }
+
+    fun stopDecoding() {
+        decodeJob?.cancel()
 
         mediaCodec.stop()
         mediaCodec.release()
@@ -90,7 +104,7 @@ class AudioDecoder(
             outputBuffer?.clear()
 
             // Buffer 처리 함수 호출
-            processBuffer(ByteBuffer.wrap(chunk))
+            processBuffer(chunk)
 
             // 처리한 Buffer 비우기
             mediaCodec.releaseOutputBuffer(outputIdx, false)
