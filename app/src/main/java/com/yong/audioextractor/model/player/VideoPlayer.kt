@@ -7,7 +7,7 @@ import android.media.AudioTrack
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.view.Surface
-import com.yong.audioextractor.model.AudioDecoder
+import com.yong.audioextractor.model.common.AudioDecoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.AssetFileDescriptor
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import com.yong.audioextractor.model.AudioDecoder
+import com.yong.audioextractor.model.common.AudioDecoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
