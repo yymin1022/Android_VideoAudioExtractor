@@ -119,11 +119,14 @@ class AudioDecoder(
             outputBuffer?.get(chunk)
             outputBuffer?.clear()
 
-            // Buffer 처리 함수 호출
-            processBuffer(chunk)
 
-            // 처리한 Buffer 비우기
-            mediaCodec.releaseOutputBuffer(outputIdx, false)
+            // 재생중인 경우
+            if(isPlaying()) {
+                // Buffer 처리 함수 호출
+                processBuffer(chunk)
+                // 처리한 Buffer 비우기
+                mediaCodec.releaseOutputBuffer(outputIdx, false)
+            }
 
             // End Of Stream Flag인 경우 종료
             if(bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
