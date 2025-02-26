@@ -55,9 +55,16 @@ class VideoPlayer {
     fun stopVideoPlay() {
         isPlaying = false
 
+        // Audio Track 종료
+        audioTrack.stop()
+        audioTrack.release()
+
         // Audio/Video Decoder 작업 종료
         audioDecoder.stopDecoding()
         videoDecoder.stopDecoding()
+
+        // Audio Extractor 해제
+        audioExtractor.release()
     }
 
     private fun initAudio(videoFd: AssetFileDescriptor) {
