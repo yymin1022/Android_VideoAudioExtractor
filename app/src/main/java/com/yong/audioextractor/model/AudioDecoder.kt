@@ -44,6 +44,9 @@ class AudioDecoder(
                 isOutputEOS = true
             }
         }
+
+        mediaCodec.stop()
+        mediaCodec.release()
     }
 
     // Input Buffer 요청
