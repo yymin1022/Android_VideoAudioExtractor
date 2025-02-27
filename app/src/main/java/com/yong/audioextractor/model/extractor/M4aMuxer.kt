@@ -43,18 +43,24 @@ class M4aMuxer(
         // Codec에 지정된 Buffer 정보 확인
         val bufferInfo = MediaCodec.BufferInfo()
 
+        var isInputEOS = false
+        var isOutputEOS = false
+
         writeJob?.cancel()
         writeJob = CoroutineScope(Dispatchers.Default).launch {
             // PCM 데이터를 인코더를 통해 AAC 파일로 변환
-            while(true) {
+            while(!isOutputEOS) {
                 // Input Buffer 요청
-                if(!getInputBuffer(pcmData)) {
-                    // 더이상 읽을 Sample 데이터가 없는 경우 종료
-                    break
+                if(!isInputEOS && !getInputBuffer(pcmData)) {
+                    isInputEOS = true
                 }
 
                 // Output Buffer 처리
-                processOutputBuffer(bufferInfo)
+                if(!processOutputBuffer(bufferInfo)) {
+                    // 더이상 Sample 데이터가 없는 경우 종료
+                    isOutputEOS = true
+                    break
+                }
             }
         }
 
